@@ -124,4 +124,11 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # 将email发送到console中, 便于test.
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# 真实的Email配置.
+EMAIL_HOST = 'smtp.163.com'
+EMAIL_HOST_USER = 'username@163.com'
+EMAIL_HOST_PASSWORD = 'password'
+EMAIL_PORT = 25
+EMAIL_USE_TLS = True
