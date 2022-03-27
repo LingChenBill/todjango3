@@ -1,0 +1,22 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <!--你想在那个地区划一个block。从该模板继承的模板可能会在包含内容的块中.-->
+  <!--您已经定义了一个名为title的块和一个名为content的块.-->
+  <title>{% block title %} {% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/blog.css' %}">
+</head>
+<body>
+  <div id="content">
+    {% block content %}
+    {% endblock %}
+  </div>
+
+  <div id="sidebar">
+    <h2>My blog</h2>
+    <p>This is my blog.</p>
+  </div>
+</body>
+</html>
