@@ -17,4 +17,7 @@
     <!--您可以连接任意多个模板过滤器；每一个都将应用于前一个生成的输出-->
     {{ post.body | truncatewords:30|linebreaks }}
   {% endfor %}
+
+  <!--设置分页.-->
+  {% include "blog/pagination.html" with page=posts %}
 {% endblock %}
