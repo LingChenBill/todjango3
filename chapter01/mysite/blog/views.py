@@ -1,5 +1,6 @@
 from django.shortcuts import render, get_object_or_404
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.views.generic import ListView
 from .models import Post
 
 
@@ -49,3 +50,16 @@ def post_detail(request, year, month, day, post):
                              publish__day=day)
     return render(request, 'blog/post/detail.html', {'post': post})
 
+
+class PostListView(ListView):
+    """
+    1.使用特定的queryset，而不是检索所有对象.
+    如果是queryset属性，则可以指定model=Post，Django将构建通用Post.objects.all().
+    2.对查询结果使用上下文变量POST。默认变量是object_list
+    3.如果您没有指定任何上下文对象名称对结果进行分页，每页显示三个对象使用自定义模板呈现页面.
+    4.如果没有设置默认模板，ListView将使用blog/post_list.html.
+    """
+    queryset = Post.published.all()
+    context_object_name = 'posts'
+    paginate_by = 3
+    template_name = 'blog/post/list.html'

@@ -10,7 +10,9 @@ app_name = 'blog'
 
 urlpatterns = [
     # post列表页面.
-    path('', views.post_list, name='post_list'),
+    # path('', views.post_list, name='post_list'),
+    # 使用基于类的对象视图.
+    path('', views.PostListView.as_view(), name='post_list'),
     # post详细页面.
     path('<int:year>/<int:month>/<int:day>/<slug:post>/',
          views.post_detail,

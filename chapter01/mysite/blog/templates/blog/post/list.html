@@ -15,9 +15,12 @@
     </p>
     <!--truncatewords将值截断为指定的字数，linebreaks将输出转换为HTML换行符. -->
     <!--您可以连接任意多个模板过滤器；每一个都将应用于前一个生成的输出-->
-    {{ post.body | truncatewords:30|linebreaks }}
+    {{ post.body|truncatewords:30|linebreaks }}
   {% endfor %}
 
   <!--设置分页.-->
-  {% include "blog/pagination.html" with page=posts %}
+  <!--由于传递给模板的页面对象称为posts，因此可以在post列表模板中包含分页模板，并传递参数以正确呈现它.-->
+  <!--{% include "blog/pagination.html" with page=posts %}-->
+  <!--使用类对象的页面视图来传值.-->
+  {% include "blog/pagination.html" with page=page_obj %}
 {% endblock %}
