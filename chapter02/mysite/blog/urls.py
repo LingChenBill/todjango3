@@ -17,4 +17,6 @@ urlpatterns = [
     path('<int:year>/<int:month>/<int:day>/<slug:post>/',
          views.post_detail,
          name='post_detail'),
+    # 邮件.
+    path('<int:post_id>/share/', views.post_share, name='post_share'),
 ]

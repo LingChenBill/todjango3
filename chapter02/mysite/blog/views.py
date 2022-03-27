@@ -1,7 +1,9 @@
 from django.shortcuts import render, get_object_or_404
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.views.generic import ListView
+from django.core.mail import send_mail
 from .models import Post
+from .forms import EmailPostForm
 
 
 # Create your views here.
@@ -49,6 +51,42 @@ def post_detail(request, year, month, day, post):
                              publish__month=month,
                              publish__day=day)
     return render(request, 'blog/post/detail.html', {'post': post})
+
+
+def post_share(request, post_id):
+    """
+    通过id来检索post.
+    :param request:
+    :param post_id:
+    :return:
+    """
+    # 通过ID检索到的具有"已发布"状态的post.
+    post = get_object_or_404(Post, id=post_id, status='published')
+    # 邮件发送成功flg.
+    sent = False
+    if request.method == 'POST':
+        # 获取提交的email表单.
+        form = EmailPostForm(request.POST)
+        # 验证表单, 是否必入力, email是否正确等.
+        if form.is_valid():
+            # 获取表单数据.
+            cd = form.cleaned_data
+            # 发送Email....
+            # post_url = request.build_absolute_url(post.get_absolute_url())
+            post_url = request.build_absolute_uri(post.get_absolute_url())
+            # 邮件主题.
+            subject = f"{cd['name']} recommends you read " \
+                      f"{post.title}"
+            # 邮件信息
+            message = f"Read {post.title} at {post_url} \n\n" \
+                      f"{cd['name']} \'s comments: {cd['comments']}"
+            send_mail(subject, message, 'admin@admin.com', [cd['to']])
+            sent = True
+    else:
+        form = EmailPostForm()
+    return render(request, 'blog/post/share.html', {'post': post,
+                                                    'form': form,
+                                                    'sent': sent})
 
 
 class PostListView(ListView):

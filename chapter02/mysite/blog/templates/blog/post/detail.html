@@ -8,4 +8,8 @@
     Published: {{ post.publish }} by {{ post.author }}
   </p>
   {{ post.body | linebreaks }}
+  <p>
+    <!-- 使用url. 需要先声明: app_name:view_name.-->
+    <a href="{% url 'blog:post_share' post.id %}">Share this post</a>
+  </p>
 {% endblock %}

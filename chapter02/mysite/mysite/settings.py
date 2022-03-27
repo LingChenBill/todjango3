@@ -122,3 +122,6 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# 将email发送到console中, 便于test.
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
