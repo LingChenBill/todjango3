@@ -31,3 +31,45 @@ python manage.py makemigrations blog
 
 python manage.py migrate
 ```
+
+#### 4.安装tag的依赖.
+```bash
+pip install django_taggit
+
+# 添加标签管理器.
+tags = TaggableManager()
+
+python manage.py makemigrations blog
+python manage.py migrate
+```
+
+#### 5.tag标签shell使用.
+```bash
+python manage.py shell
+
+>>> from blog.models import Post
+>>> post = Post.objects.get(id=2)
+>>> post
+<Post: There's the django.>
+
+# 添加标签.
+>>> post.tags.add('music', 'jazz', 'django')
+>>> post.tags.all()
+<QuerySet [<Tag: jazz>, <Tag: django>, <Tag: music>]>
+
+# 删除标签.
+>>> post.tags.remove('music')
+>>> post.tags.all()
+<QuerySet [<Tag: jazz>, <Tag: django>]>
+```
+
+#### 6.标签的管理页面.
+```text
+python manage.py runserver
+
+# 标签管理页面.
+http://127.0.0.1:8000/admin/taggit/tag/
+
+# 可以在post的编辑页面, 设置每个post的标签.
+http://127.0.0.1:8000/admin/blog/post/
+```

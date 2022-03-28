@@ -6,10 +6,26 @@
 
 {% block content %}
   <h1>My Blog</h1>
+  <!--标签管理.-->
+  {% if tag %}
+    <h2>Posts tagged with "{{ tag.name }}"</h2>
+  {% endif %}
   {% for post in posts %}
     <h2>
       <a href="{{ post.get_absolute_url }}">{{ post.title }}</a>
     </h2>
+    <!--添加post的标签.-->
+    <p class="tags">
+      <!--Tags: {{ post.tags.all | join:", " }}-->
+      Tags:
+        {% for tag in post.tags.all %}
+          <!--添加带有tag查询的post的列表.-->
+          <a href="{% url 'blog:post_list_by_tag' tag.slug %}">{{ tag.name }}</a>
+          {% if not forloop.last %},
+          {% endif %}
+        {% endfor %}
+    </p>
+
     <p class="date">
       Published: {{ post.publish }} by {{ post.author }}
     </p>
@@ -20,7 +36,7 @@
 
   <!--设置分页.-->
   <!--由于传递给模板的页面对象称为posts，因此可以在post列表模板中包含分页模板，并传递参数以正确呈现它.-->
-  <!--{% include "blog/pagination.html" with page=posts %}-->
+  {% include "blog/pagination.html" with page=posts %}
   <!--使用类对象的页面视图来传值.-->
-  {% include "blog/pagination.html" with page=page_obj %}
+  <!--{% include "blog/pagination.html" with page=page_obj %}-->
 {% endblock %}

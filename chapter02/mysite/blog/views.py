@@ -2,6 +2,7 @@ from django.shortcuts import render, get_object_or_404
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.views.generic import ListView
 from django.core.mail import send_mail
+from taggit.models import Tag
 from .models import Post, Comment
 from .forms import EmailPostForm, CommentForm
 
@@ -9,29 +10,40 @@ from .forms import EmailPostForm, CommentForm
 # Create your views here.
 
 
-def post_list(request):
+def post_list(request, tag_slug=None):
     """
     获取post列表, 过滤状态为published.
+    添加特定tag的关联功能.
     :param request:
+    :param tag_slug: 默认值为None, url中传tag的值.
     :return:
     """
     objects_list = Post.published.all()
+    # 标签处理.
+    tag = None
+
+    if tag_slug:
+        tag = get_object_or_404(Tag, slug=tag_slug)
+        # 一个post可以拥有多个tag, 一个tag可以从属于多个post.
+        # 筛选tags. many to many关系.
+        objects_list = objects_list.filter(tags__in=[tag])
+
     # 分页. 每页3个post.
     paginator = Paginator(objects_list, 3)
     # 获取当前页面数.
     page = request.GET.get('page')
-    print('page: ' + str(page))
+    # print('page: ' + str(page))
     try:
         posts = paginator.page(page)
     except PageNotAnInteger:
         # 如果页面不是整数，则交付第一页.
-        print('No pages!')
         posts = paginator.page(1)
     except EmptyPage:
         # 如果页面超出范围，请提交最后一页结果.
         posts = paginator.page(paginator.num_pages)
     return render(request, 'blog/post/list.html', {'page': page,
-                                                   'posts': posts})
+                                                   'posts': posts,
+                                                   'tag': tag})
 
 
 def post_detail(request, year, month, day, post):

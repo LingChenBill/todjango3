@@ -2,6 +2,7 @@ from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import User
 from django.urls import reverse
+from taggit.managers import TaggableManager
 
 # Create your models here.
 
@@ -43,6 +44,8 @@ class Post(models.Model):
 
     objects = models.Manager()
     published = PublishedManager()
+    # 标签管理. 标签管理器将允许您添加、检索和删除Post对象中的标签.
+    tags = TaggableManager()
 
     class Meta:
         """
