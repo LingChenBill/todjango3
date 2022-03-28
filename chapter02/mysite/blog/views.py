@@ -2,6 +2,7 @@ from django.shortcuts import render, get_object_or_404
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.views.generic import ListView
 from django.core.mail import send_mail
+from django.db.models import Count
 from taggit.models import Tag
 from .models import Post, Comment
 from .forms import EmailPostForm, CommentForm
@@ -83,10 +84,22 @@ def post_detail(request, year, month, day, post):
         # post页面初始时, 生成一个comment的form.
         comment_form = CommentForm()
 
+    # 获取相似的posts.
+    # 检索当前帖子标签的ID列表.
+    # values_list是QuerySet返回带有给定项目值的元组.
+    # 将flat=True传递给它，得到单个值，例如[1，2，3，…]而不是像[（1，），（2，），（3，）…]这样的一个元组.
+    post_tags_ids = post.tags.values_list('id', flat=True)
+    # 获取带这些的tag的posts, 排除自己.
+    similar_posts = Post.published.filter(tags__in=post_tags_ids)\
+                                  .exclude(id=post.id)
+    similar_posts = similar_posts.annotate(same_tags=Count('tags')) \
+                                 .order_by('-same_tags', '-publish')[:4]
+
     return render(request, 'blog/post/detail.html', {'post': post,
                                                      'comments': comments,
                                                      'new_comment': new_comment,
-                                                     'comment_form': comment_form})
+                                                     'comment_form': comment_form,
+                                                     'similar_posts': similar_posts})
 
 
 def post_share(request, post_id):

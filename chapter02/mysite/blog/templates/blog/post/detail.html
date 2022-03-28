@@ -13,6 +13,16 @@
     <a href="{% url 'blog:post_share' post.id %}">Share this post</a>
   </p>
 
+  <!--类似post推荐部分.-->
+  <h2>Similar posts</h2>
+  {% for post in similar_posts %}
+    <p>
+      <a href="{{ post.get_absolute_url }}">{{ post.title }}</a>
+    </p>
+    {% empty %}
+      There are no similar posts yet.
+  {% endfor %}
+
   <!--comments部分.-->
   <!--执行QuerySet语句, 声明一个新的变量, 在with语句块中这个变量可用.-->
   {% with comments.count as total_comments %}
