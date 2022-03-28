@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Post
+from .models import Post, Comment
 
 # Register your models here.
 # admin.site.register(Post)
@@ -24,3 +24,13 @@ class PostAdmin(admin.ModelAdmin):
     date_hierarchy = 'publish'
     # 排序.
     ordering = ('status', 'publish')
+
+
+@admin.register(Comment)
+class CommentAdmin(admin.ModelAdmin):
+    """
+    将models: Comment整合到admin页面.
+    """
+    list_display = ('name', 'email', 'post', 'created', 'active')
+    list_filter = ('active', 'created', 'updated')
+    search_fields = ('name', 'email', 'body')

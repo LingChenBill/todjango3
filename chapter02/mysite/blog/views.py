@@ -2,8 +2,8 @@ from django.shortcuts import render, get_object_or_404
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.views.generic import ListView
 from django.core.mail import send_mail
-from .models import Post
-from .forms import EmailPostForm
+from .models import Post, Comment
+from .forms import EmailPostForm, CommentForm
 
 
 # Create your views here.
@@ -37,6 +37,7 @@ def post_list(request):
 def post_detail(request, year, month, day, post):
     """
     获取post的详细信息.
+    添加的post相关的comments信息.
     :param request:
     :param year:
     :param month:
@@ -50,7 +51,30 @@ def post_detail(request, year, month, day, post):
                              publish__year=year,
                              publish__month=month,
                              publish__day=day)
-    return render(request, 'blog/post/detail.html', {'post': post})
+
+    # 获取post相关的comments信息
+    comments = post.comments.filter(active=True)
+
+    new_comment = None
+
+    if request.method == 'POST':
+        # 提交的comment处理.
+        comment_form = CommentForm(data=request.POST)
+        # 表单元素是否得到验证.
+        if comment_form.is_valid():
+            # 创建一个comment对象, 并不保存到db中.
+            new_comment = comment_form.save(commit=False)
+            new_comment.post = post
+            # 保存到db.
+            new_comment.save()
+    else:
+        # post页面初始时, 生成一个comment的form.
+        comment_form = CommentForm()
+
+    return render(request, 'blog/post/detail.html', {'post': post,
+                                                     'comments': comments,
+                                                     'new_comment': new_comment,
+                                                     'comment_form': comment_form})
 
 
 def post_share(request, post_id):

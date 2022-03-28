@@ -4,6 +4,7 @@
 # @Author: Lingchen
 # @Prescription:
 from django import forms
+from .models import Comment
 
 
 class EmailPostForm(forms.Form):
@@ -16,3 +17,13 @@ class EmailPostForm(forms.Form):
     to = forms.EmailField()
     # CharField + widget -> input textarea.
     comments = forms.CharField(required=False, widget=forms.Textarea)
+
+
+class CommentForm(forms.ModelForm):
+    """
+    根据Model:Comment来创建一个动态的Form.
+    """
+    class Meta:
+        model = Comment
+        # 表单元素的限定.
+        fields = ('name', 'email', 'body')

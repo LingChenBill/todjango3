@@ -65,4 +65,26 @@ class Post(models.Model):
                              self.slug])
 
 
+class Comment(models.Model):
+    """
+    评价类.
+    """
+    # comment vs post: many to one的关系.
+    # related_name='comments': 检索的关联名称. 1) comment.post. 2) post.comments.all()
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='comments')
+    name = models.CharField(max_length=80)
+    email = models.EmailField()
+    body = models.TextField()
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+    # active布尔字段，您将使用该字段手动停用不适当的评论.
+    active = models.BooleanField(default=True)
+
+    class Meta:
+        # 默认情况下，可以使用创建的字段按时间顺序对注释进行排序.
+        ordering = ('created',)
+
+    def __str__(self):
+        return f'Comment by {self.name} on {self.post}'
+
 

@@ -4,7 +4,7 @@
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 ```
 
-#### 1. 测试发送email.
+#### 2. 测试发送email.
 ```bash
 python manage.py shell
 
@@ -23,4 +23,11 @@ Message-ID: <164837649014.3404.3967982503542974045@1.0.0.127.in-addr.arpa>
 This e-mail was sent with Django.
 -------------------------------------------------------------------------------
 1
+```
+
+#### 3.执行model的数据迁移.
+```bash
+python manage.py makemigrations blog
+
+python manage.py migrate
 ```
