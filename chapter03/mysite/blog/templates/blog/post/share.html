@@ -1,0 +1,23 @@
+{% extends "blog/base.html" %}
+
+{% block title %} Share a post {% endblock %}
+
+{% block content %}
+  {% if sent %}
+    <h1>E-mail successfully send</h1>
+    <p>
+      "{{ post.title }}" was successfully sent to {{ form.cleaned_data.to }}.
+    </p>
+  {% else %}
+    <h1>Share "{{ post.title }}" by e-mail</h1>
+    <!--设置form表单. 提交方式为post.-->
+    <form method="post">
+      <!--将form是的表单元素渲染成p标签中的元素.-->
+      <!--类似的as_ul. as_table.-->
+      {{ form.as_p }}
+      <!--自动生成的一个token, 防止跨域csrf攻击.-->
+      {% csrf_token %}
+      <input type="submit" valye="Send a email">
+    </form>
+  {% endif %}
+{% endblock %}
