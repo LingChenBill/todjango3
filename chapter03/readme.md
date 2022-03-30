@@ -62,9 +62,117 @@ def get_most_commented_posts(count=5):
 </ul>
 ```
 
-#### markdown依赖安装.
+####4.markdown依赖安装.
 ```bash
 pip install markdown
 
+from django.utils.safestring import mark_safe
+
+@register.filter(name='markdown')
+def markdown_format(text):
+    """
+    markdown过滤器.
+    将函数命名为markdown_format，并将filter标记命名为模板中使用的markdown，例如{variable | markdown}.
+    Django逃避过滤器生成的HTML代码；HTML实体的字符将替换为其HTML编码的字符。例如，<p>被转换为&lt;p&gt;.
+    由Django提供的mark_safe函数，用于将结果标记为要在模板中呈现的安全HTML.
+    :param text:
+    :return:
+    """
+    return mark_safe(markdown.markdown(text))
+
+使用:
+<!--加载自己定制的tag.-->
+{% load blog_tags %}
+
+<!--truncatewords_html过滤器会在一定数量的单词后截断字符串, 避免未关闭的html标记. -->
+{{ post.body | markdown | truncatewords_html:30 }}
 ```
 
+####5.sitemap网站导航设置.
+`settings.py`设置:
+```text
+# sitemap 设置.
+SITE_ID = 1
+
+# Application definition
+
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'blog.apps.BlogConfig',
+    'taggit',
+    'django.contrib.sites',
+    'django.contrib.sitemaps',
+]
+
+生效.
+python manage.py migrate
+```
+`sitemaps.py`:
+```python
+#! /usr/bin/python3
+# -*- coding:utf-8 -*-
+# @Time: 2022/3/30
+# @Author: Lingchen
+# @Prescription:
+from django.contrib.sitemaps import Sitemap
+from .models import Post
+
+
+class PostSitemap(Sitemap):
+    """
+    构建网站post导航.
+    """
+    # changefreq和priority属性表示帖子页面的更改频率及其在网站中的相关性.
+    changefreq = 'weekly'
+    priority = 0.9
+
+    def items(self):
+        """
+        返回要包含在此网站地图中的对象的查询集.
+        :return:
+        """
+        return Post.published.all()
+
+    def lastmod(self, obj):
+        """
+        lastmod方法接收items()返回的每个对象，并返回上次修改的对象.
+        :param obj:
+        :return:
+        """
+        return obj.updated
+```
+`urls.py`:
+```python
+from django.contrib import admin
+from django.urls import path, include
+from django.contrib.sitemaps.views import sitemap
+from blog.sitemaps import PostSitemap
+
+sitemaps = {
+    'posts': PostSitemap,
+}
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('blog/', include('blog.urls', namespace='blog')),
+    # 配置网站导航.
+    path('sitemap.xml', sitemap, {'sitemaps': sitemaps},
+         name='django.contrib.sitemaps.views.sitemap')
+]
+```
+`访问sitemap`:
+```text
+http://127.0.0.1:8000/sitemap.xml
+```
+`可以设置domain域名`:
+```text
+http://127.0.0.1:8000/admin/sites/site/
+
+将域名改为:
+localhost:8000
+```
