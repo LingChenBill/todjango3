@@ -61,3 +61,10 @@ def get_most_commented_posts(count=5):
   {% endfor %}
 </ul>
 ```
+
+#### markdown依赖安装.
+```bash
+pip install markdown
+
+```
+

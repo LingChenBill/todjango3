@@ -1,6 +1,8 @@
 <!--从blog/base.html继承模板.-->
 {% extends "blog/base.html" %}
 
+<!--加载自己定制的tag.-->
+{% load blog_tags %}
 
 {% block title %}My Blog{% endblock %}
 
@@ -31,7 +33,10 @@
     </p>
     <!--truncatewords将值截断为指定的字数，linebreaks将输出转换为HTML换行符. -->
     <!--您可以连接任意多个模板过滤器；每一个都将应用于前一个生成的输出-->
-    {{ post.body|truncatewords:30|linebreaks }}
+    <!--{{ post.body|truncatewords:30|linebreaks }}-->
+
+    <!--truncatewords_html过滤器会在一定数量的单词后截断字符串，避免未关闭的html标记. -->
+    {{ post.body | markdown | truncatewords_html:30 }}
   {% endfor %}
 
   <!--设置分页.-->

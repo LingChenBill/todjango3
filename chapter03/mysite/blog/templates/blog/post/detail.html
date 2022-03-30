@@ -1,5 +1,8 @@
 {% extends "blog/base.html" %}
 
+<!--加载自己定制的tag.-->
+{% load blog_tags %}
+
 {% block title %} {{ post.title }} {% endblock %}
 
 {% block content %}
@@ -7,7 +10,10 @@
   <p class="date">
     Published: {{ post.publish }} by {{ post.author }}
   </p>
-  {{ post.body | linebreaks }}
+  <!--{{ post.body | linebreaks }}-->
+
+  <!--使用markdown过滤器, 渲染markdown形式的文本为html形式的文本.-->
+  {{ post.body | markdown }}
   <p>
     <!-- 使用url. 需要先声明: app_name:view_name.-->
     <a href="{% url 'blog:post_share' post.id %}">Share this post</a>
