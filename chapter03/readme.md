@@ -176,3 +176,76 @@ http://127.0.0.1:8000/admin/sites/site/
 将域名改为:
 localhost:8000
 ```
+#### 6.feed设置.
+创建`feeds.py` :
+```python
+from django.contrib.syndication.views import Feed
+from django.template.defaultfilters import truncatewords
+from django.urls import reverse_lazy
+from .models import Post
+
+
+class LatestPostsFeed(Feed):
+    """
+    Django有一个内置的syndication feed框架，
+    可以使用该框架动态生成RSS或Atom feed，其方式与使用网站框架创建网站地图类似.
+    title、link和description属性对应于<title>、<link>和<description>RSS元素.
+    """
+    title = 'My blog'
+    # reverse_lazy（）实用程序函数是reverse（）的一个延迟计算版本. 它允许您在加载项目的URL配置之前使用URL反转.
+    link = reverse_lazy('blog:post_list')
+    description = 'New posts of my blog.'
+
+    def items(self):
+        """
+        仅检索此订阅源最近发布的5个帖子.
+        :return:
+        """
+        return Post.published.all()[:5]
+
+    def item_title(self, item):
+        """
+        item_title（）和item_description（）方法将接收items（）返回的每个对象，并返回每个项目的标题和说明.
+        :param item:
+        :return:
+        """
+        return item.title
+
+    def item_description(self, item):
+        return truncatewords(item.body, 30)
+```
+配置urls:
+```bash
+path('feed/', LatestPostsFeed(), name='post_feed'),
+```
+访问url:
+```bash
+http://localhost:8000/blog/feed/
+```
+setting.py:
+```text
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'myblog',
+        'USER': 'myblog',
+        'PASSWORD': 'myblog'
+    }
+```
+install postgresql psycopg2:
+```bash
+pip install psycopg2-binary
+```
+db migrate:
+```bash
+python manage.py migrate
+python manage.py createsuperuser
+admin@admin.com
+admin
+admin
+
+python manage.py runserver
+
+http://localhost:8000/admin/
+admin
+admin
+```
