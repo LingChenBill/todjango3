@@ -249,3 +249,14 @@ http://localhost:8000/admin/
 admin
 admin
 ```
+7.Pygments
+```bash
+pip install Pygments
+
+# css generate.
+pygmentize -S default -f html -a .codehilite > default.css
+
+# base.html css import.
+# <!--markdown pygments css.-->
+<link rel="stylesheet" href="{% static 'css/default.css' %}">
+```

@@ -57,4 +57,9 @@ def markdown_format(text):
     :param text:
     :return:
     """
-    return mark_safe(markdown.markdown(text))
+    return mark_safe(markdown.markdown(text,
+                                       extensions=[
+                                           'markdown.extensions.extra',
+                                           'markdown.extensions.codehilite',
+                                           'markdown.extensions.toc',
+                                       ]))
