@@ -355,3 +355,19 @@ template, `search.html`:
 ```python
 path('search', views.post_search, name='post_search'),
 ```
+9.词干分析和结果排名
+`views.py`改进:
+```python
+from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
+
+# 词干分析与排名.
+search_vector = SearchVector('title', 'body')
+search_query = SearchQuery(query)
+# 创建一个SearchQuery对象，按其过滤结果，并使用SearchRank按相关性排序结果.
+results = Post.published.annotate(
+    search=search_vector,
+    rank=SearchRank(search_vector, search_query)
+).filter(search=search_query).order_by('-rank')
+```
+访问:
+`http://127.0.0.1:8000/blog/search`
