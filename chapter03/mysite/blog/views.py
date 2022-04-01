@@ -3,7 +3,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.views.generic import ListView
 from django.core.mail import send_mail
 from django.db.models import Count
-from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
+from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank, TrigramSimilarity
 from taggit.models import Tag
 from .models import Post, Comment
 from .forms import EmailPostForm, CommentForm, SearchForm
@@ -180,8 +180,9 @@ def post_search(request):
             # 对使用标题和正文构建的搜索向量应用不同的权重.
             # 默认权重为D、C、B和A，它们分别指数字0.1、0.2、0.4和1.0.
             # 将权重1.0应用于标题搜索向量，将权重0.4应用于正文向量.
-            search_vector = SearchVector('title', weight='A') + SearchVector('body', weight='B')
-            search_query = SearchQuery(query)
+            # search_vector = SearchVector('title', weight='A') + SearchVector('body', weight='B')
+            # search_query = SearchQuery(query)
+
             # 创建一个SearchQuery对象，按其过滤结果，并使用SearchRank按相关性排序结果.
             # results = Post.published.annotate(
             #     search=search_vector,
@@ -189,9 +190,14 @@ def post_search(request):
             # ).filter(search=search_query).order_by('-rank')
 
             # 标题匹配将优先于正文内容匹配. 过滤结果，只显示排名高于0.3的结果.
+            # results = Post.published.annotate(
+            #     rank=SearchRank(search_vector, search_query)
+            # ).filter(rank__gte=0.3).order_by('-rank')
+
+            # 三元相似性搜索.
             results = Post.published.annotate(
-                rank=SearchRank(search_vector, search_query)
-            ).filter(rank__gte=0.3).order_by('-rank')
+                similarity=TrigramSimilarity('title', query),
+            ).filter(similarity__gt=0.1).order_by('-similarity')
 
     return render(request, 'blog/post/search.html',
                   {'form': form,

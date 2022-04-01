@@ -371,3 +371,27 @@ results = Post.published.annotate(
 ```
 访问:
 `http://127.0.0.1:8000/blog/search`
+
+####10.三元相似性搜索
+postgres中安装install the pg_trgm extension.
+```sql
+CREATE EXTENSION pg_trgm;
+```
+`views.py`
+```python
+from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank, TrigramSimilarity
+
+query = form.cleaned_data['query']
+
+# 三元相似性搜索.
+results = Post.published.annotate(
+    similarity=TrigramSimilarity('title', query),
+).filter(similarity__gt=0.1).order_by('-similarity')
+```
+验证:
+```bash
+http://127.0.0.1:8000/blog/search
+
+yango
+会查到django相关的posts.
+```
