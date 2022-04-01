@@ -260,3 +260,98 @@ pygmentize -S default -f html -a .codehilite > default.css
 # <!--markdown pygments css.-->
 <link rel="stylesheet" href="{% static 'css/default.css' %}">
 ```
+8.搜索功能.
+`settings.py`中配置postgres:
+```python
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'blog.apps.BlogConfig',
+    'taggit',
+    'django.contrib.sites',
+    'django.contrib.sitemaps',
+    'django.contrib.postgres',
+]
+```
+
+form设置, `forms.py`:
+```python
+class SearchForm(forms.Form):
+    """
+    搜索form.
+    """
+    query = forms.CharField()
+```
+
+搜索view, `views.py`:
+```python
+def post_search(request):
+    """
+    post的搜索接口.
+    :param request:
+    :return:
+    """
+    form = SearchForm()
+    query = None
+    results = []
+
+    if 'query' in request.GET:
+        form = SearchForm(request.GET)
+        if form.is_valid():
+            # 提取query字段.
+            query = form.cleaned_data['query']
+            # 使用标题和正文字段构建的自定义SearchVector实例搜索已发布的posts.
+            results = Post.published.annotate(
+                search=SearchVector('title', 'body'),
+            ).filter(search=query)
+
+    return render(request, 'blog/post/search.html',
+                  {'form': form,
+                   'query': query,
+                   'results': results})
+```
+
+template, `search.html`:
+```html
+{% extends "blog/base.html" %}
+
+{% load blog_tags %}
+
+{% block title %}Search{% endblock %}
+
+{% block content %}
+{% if query %}
+<h1>Posts containing "{{ query }}"</h1>
+
+<h3>
+  {% with results.count as total_results %}
+  Found {{ total_results }} result{{ total_results | pluralize }}
+  {% endwith %}
+</h3>
+{% for post in results %}
+<h4><a href="{{ post.get_absolute_url }}">{{ post.title }}</a></h4>
+{{ post.body | markdown | truncatewords_html:5 }}
+{% empty %}
+<p>There are no results for your query.</p>
+{% endfor %}
+<p>
+  <a href="{% url 'blog:post_search' %}">Search again</a>
+</p>
+{% else %}
+<h1>Search for posts</h1>
+<form method="get">
+  {{ form.as_p }}
+  <input type="submit" value="Search" />
+</form>
+{% endif %}
+{% endblock %}
+```
+
+配置url, `urls.py`:
+```python
+path('search', views.post_search, name='post_search'),
+```

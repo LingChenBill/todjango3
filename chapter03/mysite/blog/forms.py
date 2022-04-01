@@ -27,3 +27,10 @@ class CommentForm(forms.ModelForm):
         model = Comment
         # 表单元素的限定.
         fields = ('name', 'email', 'body')
+
+
+class SearchForm(forms.Form):
+    """
+    搜索form.
+    """
+    query = forms.CharField()
