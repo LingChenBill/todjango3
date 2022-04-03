@@ -132,3 +132,6 @@ LOGIN_REDIRECT_URL = 'dashboard'
 LOGIN_URL = 'login'
 # 重定向用户登出.
 LOGOUT_URL = 'logout'
+
+# Email配置.
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

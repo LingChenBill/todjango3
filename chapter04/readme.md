@@ -205,3 +205,29 @@ admin
 Aa.com..
 Aa.com..
 ```
+####5.重置密码.
+使用auth中的class-based views, `views.py`:
+```python
+# 重置密码urls.
+path('password_reset/', auth_views.PasswordResetView.as_view(), name='password_reset'),
+path('password_reset/done', auth_views.PasswordResetDoneView.as_view(), name='password_reset_done'),
+path('reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
+path('reset/done/', auth_views.PasswordResetCompleteView.as_view(), name='password_reset_complete'),
+```
+创建template, 注意html的名称不要写错.
+```text
+password_reset_complete.html
+password_reset_confirm.html
+password_reset_done.html
+password_reset_email.html
+password_reset_form.html
+```
+配置email进行验证.
+`settings.py`:
+```python
+# Email配置.
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+```
+访问站点, 进行密码重置:
+`http://localhost:8000/account`
+在输入email时, 要输入用户创建时的email, 否则在控制台中看不到email信息(验证不通过).
