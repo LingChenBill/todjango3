@@ -185,3 +185,23 @@ LOGIN_URL = 'login'
 # 重定向用户登出.
 LOGOUT_URL = 'logout'
 ```
+####4.修改用户密码
+使用auth的class-based views:
+`urls.py`:
+```python
+# 密码修改urls.
+path('password_change/', auth_views.PasswordChangeView.as_view(), name='password_change'),
+path('password_change/done', auth_views.PasswordChangeDoneView.as_view(), name='password_change_done'),
+```
+templates:
+```text
+registration/password_change_form.html
+registration/password_change_done.html
+```
+访问站点, 进行用户密码验证.
+`http://localhost:8000/account/password_change/`
+```text
+admin
+Aa.com..
+Aa.com..
+```
