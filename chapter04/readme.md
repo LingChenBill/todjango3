@@ -131,3 +131,57 @@ admin
 python manage.py runserver
 ```
 访问`http://127.0.0.1:8000/account/login/`, 验证用户.
+####3.class-based views.
+`views.py`:
+```python
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def dashboard(request):
+    """
+    用户登录dashboard.
+    login_required decorator检查当前用户是否经过身份验证.
+    如果用户经过身份验证，则执行装饰视图;
+    如果用户未通过身份验证，它会将用户重定向到登录URL，并将最初请求的URL作为名为next的GET参数.
+    :param request:
+    :return:
+    """
+    # 还可以定义一个section变量. 您将使用此变量跟踪用户正在浏览的站点部分.
+    return render(request, 'account/dashboard.html', {'section': 'dashboard'})
+
+```
+`urls.py`:
+```python
+# 配置用户登录的dashboard url.
+path('', views.dashboard, name='dashboard'),
+# auth class-based login views.
+path('login/', auth_views.LoginView.as_view(), name='login'),
+path('logout/', auth_views.LogoutView.as_view(), name='logout'),
+```
+template:
+```text
+base.html
+registration/login.html
+registration/logout.html
+account/dashboard.html
+```
+`settings.py`:
+```python
+INSTALLED_APPS = [
+    'account.apps.AccountConfig',
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+]
+
+# 配置用户登录url.
+# 将用户重定向到哪个URL, 如果请求中不存在next参数，则成功登录.
+LOGIN_REDIRECT_URL = 'dashboard'
+# 重定向用户登录的URL(例如，使用登录名, 需要装饰程序).
+LOGIN_URL = 'login'
+# 重定向用户登出.
+LOGOUT_URL = 'logout'
+```
