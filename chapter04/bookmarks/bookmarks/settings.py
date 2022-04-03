@@ -31,13 +31,13 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'account.apps.AccountConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'account.apps.AccountConfig',
 ]
 
 MIDDLEWARE = [
@@ -124,3 +124,11 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# 配置用户登录url.
+# 将用户重定向到哪个URL, 如果请求中不存在next参数，则成功登录.
+LOGIN_REDIRECT_URL = 'dashboard'
+# 重定向用户登录的URL(例如，使用登录名, 需要装饰程序).
+LOGIN_URL = 'login'
+# 重定向用户登出.
+LOGOUT_URL = 'logout'

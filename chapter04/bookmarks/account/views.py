@@ -1,6 +1,7 @@
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.contrib.auth import authenticate, login
+from django.contrib.auth.decorators import login_required
 from .forms import LoginForm
 
 # Create your views here.
@@ -37,3 +38,16 @@ def user_login(request):
         form = LoginForm()
     return render(request, 'account/login.html', {'form': form})
 
+
+@login_required
+def dashboard(request):
+    """
+    用户登录dashboard.
+    login_required decorator检查当前用户是否经过身份验证.
+    如果用户经过身份验证，则执行装饰视图;
+    如果用户未通过身份验证，它会将用户重定向到登录URL，并将最初请求的URL作为名为next的GET参数.
+    :param request:
+    :return:
+    """
+    # 还可以定义一个section变量. 您将使用此变量跟踪用户正在浏览的站点部分.
+    return render(request, 'account/dashboard.html', {'section': 'dashboard'})
