@@ -2,7 +2,7 @@ from django.http import HttpResponse
 from django.shortcuts import render
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
-from .forms import LoginForm
+from .forms import LoginForm, UserRegistrationForm
 
 # Create your views here.
 
@@ -51,3 +51,28 @@ def dashboard(request):
     """
     # 还可以定义一个section变量. 您将使用此变量跟踪用户正在浏览的站点部分.
     return render(request, 'account/dashboard.html', {'section': 'dashboard'})
+
+
+def register(request):
+    """
+    用户注册.
+    :param request:
+    :return:
+    """
+    if request.method == 'POST':
+        user_form = UserRegistrationForm(request.POST)
+        if user_form.is_valid():
+            new_user = user_form.save(commit=False)
+            # 保存用户输入的原始密码时，可以使用处理哈希的用户模型的set_password()方法.
+            new_user.set_password(user_form.cleaned_data['password'])
+            new_user.save()
+
+            return render(request,
+                          'account/register_done.html',
+                          {'new_user': new_user})
+    else:
+        user_form = UserRegistrationForm()
+
+    return render(request,
+                  'account/register.html',
+                  {'user_form': user_form})

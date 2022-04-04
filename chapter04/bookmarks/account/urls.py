@@ -27,4 +27,7 @@ urlpatterns = [
 
     # 上述auth中的class-based views的url的缩写.
     path('', include('django.contrib.auth.urls')),
+
+    # 用户注册.
+    path('register/', views.register, name='register'),
 ]

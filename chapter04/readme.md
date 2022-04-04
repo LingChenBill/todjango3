@@ -231,3 +231,78 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 访问站点, 进行密码重置:
 `http://localhost:8000/account`
 在输入email时, 要输入用户创建时的email, 否则在控制台中看不到email信息(验证不通过).
+
+####6.用户登录.
+form表单设置:
+```python
+from django.contrib.auth.models import User
+
+class UserRegistrationForm(forms.ModelForm):
+    """
+    用户注册form.
+    """
+    # 添加表单的项目.
+    password = forms.CharField(label='Password', widget=forms.PasswordInput)
+    password2 = forms.CharField(label='Repeat Password', widget=forms.PasswordInput)
+
+    class Meta:
+        model = User
+        # 表单的元素.
+        fields = ('username', 'first_name', 'email')
+
+    def clean_password2(self):
+        """
+        对照第一个密码检查第二个密码，如果密码不匹配，不让表单is_valid()验证通过.
+        当您通过调用表单的is_valid（）方法验证表单时，将完成此检查.
+        :return:
+        """
+        cd = self.cleaned_data
+        if cd['password'] != cd['password2']:
+            raise forms.ValidationError('Passwords don\'t match. ')
+        return cd['password2']
+```
+`views.py`:
+```python
+from .forms import LoginForm, UserRegistrationForm
+
+def register(request):
+    """
+    用户注册.
+    :param request:
+    :return:
+    """
+    if request.method == 'POST':
+        user_form = UserRegistrationForm(request.POST)
+        if user_form.is_valid():
+            new_user = user_form.save(commit=False)
+            # 保存用户输入的原始密码时，可以使用处理哈希的用户模型的set_password()方法.
+            new_user.set_password(user_form.cleaned_data['password'])
+            new_user.save()
+
+            return render(request,
+                          'account/register_done.html',
+                          {'new_user': new_user})
+    else:
+        user_form = UserRegistrationForm()
+
+    return render(request,
+                  'account/register.html',
+                  {'user_form': user_form})
+
+```
+url配置,`urls.py`:
+```python
+# 用户注册.
+path('register/', views.register, name='register'),
+```
+templates:
+```text
+register.html
+register_done.html
+```
+访问站点, 进行用户注册验证:
+`http://127.0.0.1:8000/account/register/`
+```text
+lingchen
+Aa.com..
+```
