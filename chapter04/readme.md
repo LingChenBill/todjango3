@@ -336,4 +336,136 @@ class Profile(models.Model):
 ```bash
 pip install Pillow
 ```
+数据迁移:
+```bash
+python manage.py makemigrations
 
+python manage.py migrate
+```
+注册profile到admin管理中:
+```python
+from django.contrib import admin
+from .models import Profile
+
+# Register your models here.
+
+@admin.register(Profile)
+class ProfileAdmin(admin.ModelAdmin):
+    """
+    profile配置.
+    """
+    list_display = ['user', 'date_of_birth', 'photo']
+```
+启动服务, 查看profile:
+```bash
+python manage.py runserver
+```
+`http://127.0.0.1:8000/admin`, 可以添加profile.
+用户编辑profile, `forms.py`:
+```python
+from django import forms
+from django.contrib.auth.models import User
+from .models import Profile
+
+
+class LoginForm(forms.Form):
+    """
+    用户登录form.
+    """
+    username = forms.CharField()
+    # input -> password type.
+    password = forms.CharField(widget=forms.PasswordInput)
+
+
+class UserRegistrationForm(forms.ModelForm):
+    """
+    用户注册form.
+    """
+    # 添加表单的项目.
+    password = forms.CharField(label='Password', widget=forms.PasswordInput)
+    password2 = forms.CharField(label='Repeat Password', widget=forms.PasswordInput)
+
+    class Meta:
+        model = User
+        # 表单的元素.
+        fields = ('username', 'first_name', 'email')
+
+    def clean_password2(self):
+        """
+        对照第一个密码检查第二个密码，如果密码不匹配，不让表单is_valid()验证通过.
+        当您通过调用表单的is_valid（）方法验证表单时，将完成此检查.
+        :return:
+        """
+        cd = self.cleaned_data
+        if cd['password'] != cd['password2']:
+            raise forms.ValidationError('Passwords don\'t match. ')
+        return cd['password2']
+
+
+class UserEditForm(forms.ModelForm):
+    """
+    用户编辑form.
+    这将允许用户编辑他们的名字，姓氏，和电子邮件，这是内置Django用户模型的属性.
+    """
+    class Meta:
+        model = User
+        fields = ('first_name', 'last_name', 'email')
+
+
+class ProfileEditForm(forms.ModelForm):
+    """
+    用户profile编辑form.
+    允许用户编辑您需要的配置文件数据保存在自定义配置文件模型中.
+    用户可以编辑他们的注册日期出生并上传他们个人资料的图片.
+    """
+    class Meta:
+        model = Profile
+        fields = ('date_of_birth', 'photo')
+```
+`views.py`:
+```python
+from .forms import LoginForm, UserRegistrationForm, UserEditForm, ProfileEditForm
+from .models import Profile
+
+# 注册用户中, 添加profile的创建.
+# 用户配置信息.
+Profile.objects.create(user=new_user)
+
+@login_required
+def edit(request):
+    """
+    用户编辑view设置.
+    UserEditForm用于存储内置用户模型的数据，ProfileEditForm用于在自定义配置文件模型中存储附加的profile数据.
+    :param request:
+    :return:
+    """
+    if request.method == 'POST':
+        user_form = UserEditForm(instance=request.user, data=request.POST)
+        profile_form = ProfileEditForm(instance=request.user.profile, data=request.POST, files=request.FILES)
+        if user_form.is_valid() and profile_form.is_valid():
+            user_form.save()
+            profile_form.save()
+    else:
+        user_form = UserEditForm(instance=request.user)
+        profile_form = ProfileEditForm(instance=request.user.profile)
+
+    return render(request,
+                  'account/edit.html',
+                  {'user_form': user_form,
+                   'profile_form': profile_form})
+```
+配置`urls.py`:
+```python
+# 用户profile编辑.
+path('edit/', views.edit, name='edit'),
+```
+添加templates:
+```text
+edit.html
+```
+在`dashboard.html`中添加相关链接.
+```html
+Welcome to your dashboard.
+You can <a href="{% url 'edit' %}">edit your profile</a>
+or <a href="{% url 'password_change' %}">change your password</a>.
+```

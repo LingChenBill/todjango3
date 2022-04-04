@@ -30,4 +30,7 @@ urlpatterns = [
 
     # 用户注册.
     path('register/', views.register, name='register'),
+
+    # 用户profile编辑.
+    path('edit/', views.edit, name='edit'),
 ]

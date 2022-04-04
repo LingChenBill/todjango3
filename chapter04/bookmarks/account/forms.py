@@ -5,6 +5,7 @@
 # @Prescription:
 from django import forms
 from django.contrib.auth.models import User
+from .models import Profile
 
 
 class LoginForm(forms.Form):
@@ -39,3 +40,24 @@ class UserRegistrationForm(forms.ModelForm):
         if cd['password'] != cd['password2']:
             raise forms.ValidationError('Passwords don\'t match. ')
         return cd['password2']
+
+
+class UserEditForm(forms.ModelForm):
+    """
+    用户编辑form.
+    这将允许用户编辑他们的名字，姓氏，和电子邮件，这是内置Django用户模型的属性.
+    """
+    class Meta:
+        model = User
+        fields = ('first_name', 'last_name', 'email')
+
+
+class ProfileEditForm(forms.ModelForm):
+    """
+    用户profile编辑form.
+    允许用户编辑您需要的配置文件数据保存在自定义配置文件模型中.
+    用户可以编辑他们的注册日期出生并上传他们个人资料的图片.
+    """
+    class Meta:
+        model = Profile
+        fields = ('date_of_birth', 'photo')
