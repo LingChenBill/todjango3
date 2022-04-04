@@ -135,3 +135,9 @@ LOGOUT_URL = 'logout'
 
 # Email配置.
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# 图片处理配置.
+# 用于为用户上传的媒体提供服务的基本URL.
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
+

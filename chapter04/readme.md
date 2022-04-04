@@ -231,7 +231,6 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 访问站点, 进行密码重置:
 `http://localhost:8000/account`
 在输入email时, 要输入用户创建时的email, 否则在控制台中看不到email信息(验证不通过).
-
 ####6.用户登录.
 form表单设置:
 ```python
@@ -306,3 +305,35 @@ register_done.html
 lingchen
 Aa.com..
 ```
+
+
+####7.用户增强.
+model中用户增加配置:
+```python
+from django.db import models
+from django.conf import settings
+
+# Create your models here.
+
+
+class Profile(models.Model):
+    """
+    用户model增加配置.
+    """
+    # 用户一对一字段允许您将profiles与用户关联.
+    # 对on_delete参数使用CASCADE，以便在删除用户时也删除其相关的profile.
+    user = models.OneToOneField(settings.AUTH_USER_MODEL,
+                                on_delete=models.CASCADE)
+
+    date_of_birth = models.DateField(blank=True, null=True)
+    # 照片是一个图片类型项目. 你需要安装Pillow库来处理图像.
+    photo = models.ImageField(upload_to='users/%Y/%m/%d', blank=True)
+
+    def __str__(self):
+        return f'Profile for user {self.user.username}'
+```
+图片处理, 安装依赖:
+```bash
+pip install Pillow
+```
+
