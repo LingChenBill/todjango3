@@ -533,3 +533,34 @@ AUTHENTICATION_BACKENDS = [
     'account.authentication.EmailAuthBackend',
 ]
 ```
+
+####10.社交认证.
+安装依赖:
+```bash
+pip install social-auth-app-django
+```
+`settings.py`配置:
+```python
+# 配置可信任的域名.
+ALLOWED_HOSTS = ['mybookmarks.com', 'localhost', '127.0.0.1']
+
+# 定制认证后台.
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'account.authentication.EmailAuthBackend',
+]
+```
+数据迁移:
+```bash
+python manage.py migrate
+```
+安装https相关依赖:
+```bash
+pip install django-extensions
+
+pip install werkzeug
+
+pip install pyOpenSSL
+
+python manage.py runserver_plus --cert-file cert.crt
+```
