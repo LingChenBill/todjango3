@@ -24,6 +24,8 @@ urlpatterns = [
     path('account/', include('account.urls')),
     # 社交认证.
     path('social-auth/', include('social_django.urls', namespace='social')),
+    # 图片app.
+    path('images/', include('images.urls', namespace='images')),
 ]
 
 if settings.DEBUG:
