@@ -467,7 +467,6 @@ Welcome to your dashboard.
 You can <a href="{% url 'edit' %}">edit your profile</a>
 or <a href="{% url 'password_change' %}">change your password</a>.
 ```
-
 ####8.message设置.
 使用`django.contrib. messages.context_processors.messages`, 在templates中可以直接使用messages变量.
 ```python
@@ -493,7 +492,6 @@ template中, `base.html`:
 </ul>
 {% endif %}
 ```
-
 ####9.定制认证后台.
 定制`authentication.py`:
 ```python
@@ -533,7 +531,6 @@ AUTHENTICATION_BACKENDS = [
     'account.authentication.EmailAuthBackend',
 ]
 ```
-
 ####10.社交认证.
 安装依赖:
 ```bash
@@ -558,9 +555,15 @@ python manage.py migrate
 ```bash
 pip install django-extensions
 
-pip install werkzeug
+# 访问https:mysite.com:8000/account没有成功.
+# pip install werkzeug
+# pip install django-werkzeug-debugger-runserver
 
 pip install pyOpenSSL
 
+# 生成认证文件:
+openssl req -new -x509 -newkey rsa:4096 -keyout server.key -out server.crt
+
 python manage.py runserver_plus --cert-file cert.crt
+python manage.py runserver_plus --cert server.crt mysite.com:8000
 ```
