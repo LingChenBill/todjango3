@@ -236,3 +236,4 @@ def image_create(request):
 http://localhost:8000/images/create/?title=world&url=http://localhost:8000/media/images/2022/04/05/world.jpg
 ```
 
+
