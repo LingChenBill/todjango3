@@ -27,7 +27,7 @@ SECRET_KEY = 'django-insecure-@!lnt@#p4%y=o#ld&5mkj$d+6nq$2c8m#w_jfm_i3=qy7ctfjj
 DEBUG = True
 
 # 配置可信任的域名.
-ALLOWED_HOSTS = ['mysite.com', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['mysite.com', 'localhost', '127.0.0.1', 'unsplash.com']
 
 
 # Application definition

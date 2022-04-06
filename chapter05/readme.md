@@ -235,5 +235,14 @@ def image_create(request):
 ```text
 http://localhost:8000/images/create/?title=world&url=http://localhost:8000/media/images/2022/04/05/world.jpg
 ```
+####3.https访问设置
+```text
+python manage.py runserver_plus --cert-file cert.crt
 
+将`chapter05/bookmarks/cert.crt`添加到mac的钥匙串中, 将信任关系设置成`始终信任`
+用`无痕模式`打开新的chrome浏览器窗口, 
+访问站点:
 
+https://127.0.0.1:8000/account/
+即可.
+```
