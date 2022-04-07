@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.utils.text import slugify
+from django.urls import reverse
 
 # Create your models here.
 
@@ -49,3 +50,10 @@ class Image(models.Model):
             # 当slug为空时, 根据title来自动生成slug.
             self.slug = slugify(self.title)
         super().save(*args, **kwargs)
+
+    def get_absolute_url(self):
+        """
+        图片地址.
+        :return:
+        """
+        return reverse('images:detail', args=[self.id, self.slug])

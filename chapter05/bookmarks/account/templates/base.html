@@ -30,7 +30,7 @@
         <!--Hello, {{ request.user.first_name }}-->
         Hello
         <!--用户图片设置.-->
-        <img src="http://localhost:8000/media/{{request.user.profile.photo}}" height="15px;" />
+        <img src="https://localhost:8000/media/{{request.user.profile.photo}}" height="15px;" />
         {{ request.user.username }},
         <a href="{% url 'logout' %}">Logout</a>
       {% else %}

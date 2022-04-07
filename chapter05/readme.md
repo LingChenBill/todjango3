@@ -246,3 +246,72 @@ python manage.py runserver_plus --cert-file cert.crt
 https://127.0.0.1:8000/account/
 即可.
 ```
+####4.图片详情.
+`models.py`:
+```python
+def get_absolute_url(self):
+    """
+    图片地址.
+    :return:
+    """
+    return reverse('images:detail', args=[self.id, self.slug])
+```
+`views.py`:
+```python
+def image_detail(request, id, slug):
+    """
+    图片详细信息.
+    :param request:
+    :param id:
+    :param slug:
+    :return:
+    """
+    image = get_object_or_404(Image, id=id, slug=slug)
+    return render(request,
+                  'images/image/detail.html',
+                  {'section': 'images',
+                   'image': image})
+```
+`urls.py`:
+```python
+# 图片详细信息.
+path('detail/<int:id>/<slug:slug>/', views.image_detail, name='detail'),
+```
+`detail.html`:
+```html
+{% extends "base.html" %}
+
+{% block title %}{{ image.title }}{% endblock %}
+
+{% block content %}
+  <h1>{{ image.title }}</h1>
+
+  <img src="{{ image.image.url }}" class="image-detail">
+
+  {% with total_likes=image.users_like.count %}
+    <div class="image-info">
+      <div>
+        <span class="count">
+          {{ total_likes }} like{{ total_likes | pluralize }}
+        </span>
+      </div>
+      {{ image.description | linebreaks }}
+    </div>
+    <div class="image-likes">
+      {% for user in image.users_likes.all %}
+        <div>
+          <img src="{{ user.profile.photo.url }}">
+          <p>{{ user.first_name }}</p>
+        </div>
+      {% empty %}
+        Nobody likes this image yet.
+      {% endfor %}
+    </div>
+  {% endwith %}
+{% endblock %}
+```
+```text
+访问图片网址:
+https://localhost:8000/media/images/2022/04/05/andrew-ling-IopOGhYjpfU.jpg
+将点击图片收藏标签, 将该图片加入到图片like中. 可以跳转到图片详情中.
+```

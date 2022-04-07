@@ -11,4 +11,6 @@ app_name = 'images'
 urlpatterns = [
     # 图片创建.
     path('create/', views.image_create, name='create'),
+    # 图片详细信息.
+    path('detail/<int:id>/<slug:slug>/', views.image_detail, name='detail'),
 ]
