@@ -1,11 +1,19 @@
 {% extends "base.html" %}
+<!--加载缩略图库.-->
+{% load thumbnail %}
 
 {% block title %}{{ image.title }}{% endblock %}
 
 {% block content %}
   <h1>{{ image.title }}</h1>
 
-  <img src="{{ image.image.url }}" class="image-detail">
+  <!--<img src="{{ image.image.url }}" class="image-detail">-->
+  <!--通过使用值0，定义一个固定宽度为300像素、高度灵活的缩略图，以保持纵横比.-->
+  <a href="{{ image.image.url }}">
+    <!--<img src="{% thumbnail image.image 300x0 %}" class="image-detail">-->
+    <!--<img src="{% thumbnail image.image 300x0 quality=100 %}" class="image-detail">-->
+    <img src="{% thumbnail image.image 300x200 quality=50 %}" class="image-detail">
+  </a>
 
   {% with total_likes=image.users_like.count %}
     <div class="image-info">

@@ -315,3 +315,33 @@ path('detail/<int:id>/<slug:slug>/', views.image_detail, name='detail'),
 https://localhost:8000/media/images/2022/04/05/andrew-ling-IopOGhYjpfU.jpg
 将点击图片收藏标签, 将该图片加入到图片like中. 可以跳转到图片详情中.
 ```
+
+####5.图片缩略图.
+安装依赖:
+```bash
+pip install easy-thumbnails
+```
+将应用加入已安装app列表:
+```python
+'easy_thumbnails',
+```
+数据迁移, 生成对应的表结构:
+```bash
+python manage.py migrate
+```
+thumbnail的官网:
+```text
+https://easy-thumbnails.readthedocs.io/
+```
+网页加载图片:
+```html
+<!--加载缩略图库.-->
+{% load thumbnail %}
+
+<!--通过使用值0，定义一个固定宽度为300像素、高度灵活的缩略图，以保持纵横比.-->
+<a href="{{ image.image.url }}">
+  <!--<img src="{% thumbnail image.image 300x0 %}" class="image-detail">-->
+  <!--<img src="{% thumbnail image.image 300x0 quality=100 %}" class="image-detail">-->
+  <img src="{% thumbnail image.image 300x200 quality=50 %}" class="image-detail">
+</a>
+```
