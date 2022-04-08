@@ -58,5 +58,35 @@
     {% block content %}
     {% endblock %}
   </div>
+
+  <script src="{% static 'js/jquery.min.js' %}"></script>
+  <!--JS Cookie是一个用于处理Cookie的轻量级JavaScript API.-->
+  <script src="{% static 'js/js.cookie.min.js' %}"></script>
+  <script>
+    // 获取csrf_token.
+    var csrftoken = Cookies.get('csrftoken');
+
+    function csrfSafeMethod(method) {
+        // 这些HTTP方法不需要CSRF保护.
+        return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+    }
+
+    // 您可以使用$.ajaxSetup来处理jQuery AJAX请求.
+    // 如果执行请求，则检查请求方法是否安全，以及当前请求是否跨域.
+    // 如果请求不安全，则使用从cookie获得的值设置X-CSRFToken头.
+    // 此设置将应用于使用jQuery执行的所有AJAX请求.
+    $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+            if (!csrfSafeMethod(settings.type) && !this.crossOrigin) {
+                xhr.setRequestHeader('X-CSRFToken', csrftoken);
+            }
+        }
+    });
+
+    $(document).ready(function(){
+      {% block domready %}
+      {% endblock %}
+    });
+  </script>
 </body>
 </html>

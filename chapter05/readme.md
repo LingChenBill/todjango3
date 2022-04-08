@@ -315,7 +315,6 @@ path('detail/<int:id>/<slug:slug>/', views.image_detail, name='detail'),
 https://localhost:8000/media/images/2022/04/05/andrew-ling-IopOGhYjpfU.jpg
 将点击图片收藏标签, 将该图片加入到图片like中. 可以跳转到图片详情中.
 ```
-
 ####5.图片缩略图.
 安装依赖:
 ```bash
@@ -344,4 +343,121 @@ https://easy-thumbnails.readthedocs.io/
   <!--<img src="{% thumbnail image.image 300x0 quality=100 %}" class="image-detail">-->
   <img src="{% thumbnail image.image 300x200 quality=50 %}" class="image-detail">
 </a>
+```
+####6.图片的ajax喜欢操作.
+`base.html`:
+```html
+<script src="{% static 'js/jquery.min.js' %}"></script>
+<!--JS Cookie是一个用于处理Cookie的轻量级JavaScript API.-->
+<script src="{% static 'js/js.cookie.min.js' %}"></script>
+<script>
+// 获取csrf_token.
+var csrftoken = Cookies.get('csrftoken');
+
+function csrfSafeMethod(method) {
+    // 这些HTTP方法不需要CSRF保护.
+    return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+}
+
+// 您可以使用$.ajaxSetup来处理jQuery AJAX请求.
+// 如果执行请求，则检查请求方法是否安全，以及当前请求是否跨域.
+// 如果请求不安全，则使用从cookie获得的值设置X-CSRFToken头.
+// 此设置将应用于使用jQuery执行的所有AJAX请求.
+$.ajaxSetup({
+    beforeSend: function(xhr, settings) {
+        if (!csrfSafeMethod(settings.type) && !this.crossOrigin) {
+            xhr.setRequestHeader('X-CSRFToken', csrftoken);
+        }
+    }
+});
+
+$(document).ready(function(){
+  {% block domready %}
+  {% endblock %}
+});
+</script>
+```
+`view.py`:
+```python
+@ajax_required
+@login_required
+@require_POST
+def image_like(request):
+    """
+    图片喜爱/不喜爱操作.
+    需要登录的装饰器阻止未登录的用户访问此视图.
+    如果HTTP请求没有通过POST完成，require_POST decorator将返回一个HttpResponseNotAllowed对象（状态代码405）.
+    这样，您只允许对该视图进行POST请求。
+    :param request:
+    :return:
+    """
+    image_id = request.POST.get('id')
+    action = request.POST.get('action')
+    if image_id and action:
+        try:
+            image = Image.objects.get(id=image_id)
+            if action == 'like':
+                image.users_like.add(request.user)
+            else:
+                image.users_like.remove(request.user)
+            return JsonResponse({'status': 'ok'})
+
+        except:
+            pass
+
+    return JsonResponse({'status': 'error'})
+```
+`urls.py`:
+```python
+# 图片喜欢操作.
+path('like/', views.image_like, name='like'),
+```
+`detail.html`:
+```html
+<!--ajax操作.-->
+{% block domready %}
+  $('a.like').click(function(e) {
+    e.preventDefault();
+
+    $.post('{% url "images:like" %}',
+           {
+              id: $(this).data('id'),
+              action: $(this).data('action')
+           },
+           function(data) {
+              if (data['status']) {
+                var previous_action = $('a.like').data('action');
+
+                // 替换data, action.
+                $('a.like').data('action', previous_action == 'like'? 'unlike' : 'like');
+                // 替换按钮文本内容.
+                $('a.like').text(previous_action == 'like'? 'Unlike' : 'Like');
+
+                var previous_likes = parseInt($('span.count .total').text());
+                // 更新like的数据.
+                $('span.count .total').text(previous_action == 'like'? previous_likes + 1 : previous_likes - 1);
+              }
+           }
+    );
+  });
+{% endblock %}
+```
+装饰器配置:
+```python
+from django.http import HttpResponseBadRequest
+
+
+def ajax_required(f):
+    def wrap(request, *args, **kwargs):
+        if not request.is_ajax():
+            return HttpResponseBadRequest()
+        return f(request, *args, **kwargs)
+
+    wrap.__doc__ = f.__doc__
+    wrap.__name__=f.__name__
+    return wrap
+```
+网址验证.
+```bash
+https://localhost:8000/media/images/2022/04/05/world.jpg
 ```

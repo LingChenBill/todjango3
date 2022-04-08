@@ -15,17 +15,26 @@
     <img src="{% thumbnail image.image 300x200 quality=50 %}" class="image-detail">
   </a>
 
-  {% with total_likes=image.users_like.count %}
+  {% with total_likes=image.users_like.count users_like=image.users_like.all %}
     <div class="image-info">
       <div>
         <span class="count">
-          {{ total_likes }} like{{ total_likes | pluralize }}
+          <span class="total">{{ total_likes }}</span>
+          like{{ total_likes | pluralize }}
         </span>
+
+        <a href="#" data-id="{{ image.id }}" data-action="{% if request.user in users_like %}un{% endif %}like" class="like button">
+          {% if request.user not in users_like %}
+            Like
+          {% else %}
+            Unlike
+          {% endif %}
+        </a>
       </div>
       {{ image.description | linebreaks }}
     </div>
     <div class="image-likes">
-      {% for user in image.users_likes.all %}
+      {% for user in users_like %}
         <div>
           <img src="{{ user.profile.photo.url }}">
           <p>{{ user.first_name }}</p>
@@ -35,4 +44,31 @@
       {% endfor %}
     </div>
   {% endwith %}
+{% endblock %}
+
+{% block domready %}
+  $('a.like').click(function(e) {
+    e.preventDefault();
+
+    $.post('{% url "images:like" %}',
+           {
+              id: $(this).data('id'),
+              action: $(this).data('action')
+           },
+           function(data) {
+              if (data['status']) {
+                var previous_action = $('a.like').data('action');
+
+                // 替换data, action.
+                $('a.like').data('action', previous_action == 'like'? 'unlike' : 'like');
+                // 替换按钮文本内容.
+                $('a.like').text(previous_action == 'like'? 'Unlike' : 'Like');
+
+                var previous_likes = parseInt($('span.count .total').text());
+                // 更新like的数据.
+                $('span.count .total').text(previous_action == 'like'? previous_likes + 1 : previous_likes - 1);
+              }
+           }
+    );
+  });
 {% endblock %}
