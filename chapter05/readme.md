@@ -461,3 +461,119 @@ def ajax_required(f):
 ```bash
 https://localhost:8000/media/images/2022/04/05/world.jpg
 ```
+####7.图片列表ajax请求.
+`view.py`:
+```python
+@login_required
+def image_list(request):
+    """
+    图片列表.
+    :param request:
+    :return:
+    """
+    images = Image.objects.all()
+    # 构建Paginator对象对结果进行分页，每页检索八幅图像.
+    paginator = Paginator(images, 8)
+    page = request.GET.get('page')
+
+    try:
+        images = paginator.page(page)
+    except PageNotAnInteger:
+        images = paginator.page(1)
+    except EmptyPage:
+        if request.is_ajax():
+            # 若请求是一个ajax, 且页码超过界限, 返回一个空的对象.
+            return HttpResponse('')
+        images = paginator.page(paginator.num_pages)
+
+    if request.is_ajax():
+        # 这个模板将只包含请求页面的图像.
+        return render(request,
+                      'images/image/list_ajax.html',
+                      {'section': 'images',
+                       'images': images})
+
+    # 这个模板将扩展base.html模板来显示整个页面，并将包括list_ajax.html模板, 用来包括图像列表.
+    return render(request,
+                  'images/image/list.html',
+                  {'section': 'images',
+                   'images': images})
+```
+`urls.py`:
+```python
+# 图片列表.
+path('', views.image_list, name='list'),
+```
+templates:
+`list.html`:
+```html
+{% extends "base.html" %}
+
+{% block title %}Images bookmarked{% endblock %}
+
+{% block content %}
+  <h1>Images bookmarked</h1>
+
+  <div id="image-list">
+    <!--包含图片列表画面.-->
+    {% include "images/image/list_ajax.html" %}
+  </div>
+{% endblock %}
+
+{% block domready %}
+  <!--当前的页码.-->
+  var page = 1;
+  <!--判断当前页码是否最后一页, 是否到了图片数的界限.-->
+  var empty_page = false;
+  <!--判断是否发送ajax请求.-->
+  var block_request = false;
+
+  <!--使用$(window).scroll()以捕获滚动事件和定义一个处理函数.-->
+  $(window).scroll(function(){
+    var margin = $(document).height() - $(window).height() - 200;
+    if ($(window).scrollTop() > margin && empty_page == false && block_request == false) {
+      block_request = true;
+      page += 1;
+
+      $.get('?page=' + page, function(data) {
+        if (data == '') {
+          empty_page = true;
+        }
+        else {
+          block_request = false;
+          $('#image-list').append(data);
+        }
+      });
+    }
+  });
+{% endblock %}
+```
+`list_ajax.html`:
+```html
+<!--加载缩略图.-->
+{% load thumbnail %}
+
+{% for image in images %}
+  <div class="image">
+    <a href="{{ image.get_absolute_url }}">
+      <!--你在图像上迭代并为每个图像生成一个方形缩略图.将缩略图的大小规格化为300x300像素.-->
+      <!--还可以使用智能裁剪选项, 此选项表示必须通过从熵最小的边缘移除切片，将图像增量裁剪到所需大小.-->
+      {% thumbnail image.image 300x300 crop="smart" as im %}
+
+      <a href="{{ image.get_absolute_url }}">
+        <img src="{{ im.url }}">
+      </a>
+    </a>
+    <div class="info">
+      <a href="{{ image.get_absolute_url }}" class="title">
+        {{ image.title }}
+      </a>
+    </div>
+  </div>
+{% endfor %}
+```
+访问网址, 验证图片列表:
+```bash
+https://localhost:8000/images
+```
+

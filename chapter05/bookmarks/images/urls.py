@@ -15,4 +15,6 @@ urlpatterns = [
     path('detail/<int:id>/<slug:slug>/', views.image_detail, name='detail'),
     # 图片喜欢操作.
     path('like/', views.image_like, name='like'),
+    # 图片列表.
+    path('', views.image_list, name='list'),
 ]

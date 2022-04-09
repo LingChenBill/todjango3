@@ -1,8 +1,9 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_POST
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from .forms import ImageCreateForm
 from .models import Image
 from common.decorators import ajax_required
@@ -78,3 +79,40 @@ def image_like(request):
             pass
 
     return JsonResponse({'status': 'error'})
+
+
+@login_required
+def image_list(request):
+    """
+    图片列表.
+    :param request:
+    :return:
+    """
+    images = Image.objects.all()
+    # 构建Paginator对象对结果进行分页，每页检索八幅图像.
+    paginator = Paginator(images, 8)
+    page = request.GET.get('page')
+
+    try:
+        images = paginator.page(page)
+    except PageNotAnInteger:
+        images = paginator.page(1)
+    except EmptyPage:
+        if request.is_ajax():
+            # 若请求是一个ajax, 且页码超过界限, 返回一个空的对象.
+            return HttpResponse('')
+        images = paginator.page(paginator.num_pages)
+
+    if request.is_ajax():
+        # 这个模板将只包含请求页面的图像.
+        return render(request,
+                      'images/image/list_ajax.html',
+                      {'section': 'images',
+                       'images': images})
+
+    # 这个模板将扩展base.html模板来显示整个页面，并将包括list_ajax.html模板, 用来包括图像列表.
+    return render(request,
+                  'images/image/list.html',
+                  {'section': 'images',
+                   'images': images})
+
