@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.0/ref/settings/
 """
 
+from django.urls import reverse_lazy
 from pathlib import Path
 import os
 
@@ -25,6 +26,9 @@ SECRET_KEY = 'django-insecure-@!lnt@#p4%y=o#ld&5mkj$d+6nq$2c8m#w_jfm_i3=qy7ctfjj
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
+
+# thumbnail debug mode.
+THUMBNAIL_DEBUG = True
 
 # 配置可信任的域名.
 ALLOWED_HOSTS = ['mysite.com', 'localhost', '127.0.0.1', 'unsplash.com']
@@ -152,3 +156,13 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'account.authentication.EmailAuthBackend',
 ]
+
+# 使用user_detail URL模式为用户生成规范的URL.
+# 您已经在模型中设计了一个get_absolute_url()方法，用于返回每个对象的规范url.
+# 为模型指定URL的另一种方法是将ABSOLUTE_URL_OVERRIDES设置添加到项目中.
+# Django向出现在ABSOLUTE_URL_OVERRIDES设置中的任何模型动态添加get_absolute_url()方法.
+# 此方法返回设置中指定的给定模型的相应URL. 返回给定用户的用户详细信息URL.
+ABSOLUTE_URL_OVERRIDES = {
+    'auth.user': lambda u: reverse_lazy('user_detail', args=[u.username])
+}
+

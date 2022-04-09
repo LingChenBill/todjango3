@@ -33,4 +33,9 @@ urlpatterns = [
 
     # 用户profile编辑.
     path('edit/', views.edit, name='edit'),
+
+    # 用户列表.
+    path('users/', views.user_list, name='user_list'),
+    # 用户详细.
+    path('users/<username>/', views.user_detail, name='user_detail'),
 ]
