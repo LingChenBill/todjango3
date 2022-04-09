@@ -16,7 +16,7 @@ class Contact(models.Model):
     你想存储建立关系的时间.
     """
     # 创建关系的用户的外键.
-    user_form = models.ForeignKey('auth.User',
+    user_from = models.ForeignKey('auth.User',
                                   related_name='rel_from_set',
                                   on_delete=models.CASCADE)
     # 被跟踪用户的外键.
@@ -31,7 +31,7 @@ class Contact(models.Model):
         ordering = ('-created',)
 
     def __str__(self):
-        return f'{self.user_form} follows {self.user_to}'
+        return f'{self.user_from} follows {self.user_to}'
 
 
 # 向用户动态添加以下字段.
@@ -134,4 +134,71 @@ path('users/<username>/', views.user_detail, name='user_detail'),
 ```text
 https://localhost:8000/account/users/
 ```
+####5.用户follow操作.
+`views.py`:
+```python
+from django.http import HttpResponse, JsonResponse
+from django.views.decorators.http import require_POST
+from .models import Profile, Contact
+from common.decorators import ajax_required
 
+@ajax_required
+@require_POST
+@login_required
+def user_follow(request):
+    """
+    用户follow操作. POST提交数据.
+    :param request:
+    :return:
+    """
+    user_id = request.POST.get('id')
+    action = request.POST.get('action')
+
+    if user_id and action:
+        try:
+            user = User.objects.get(id=user_id)
+            if action == 'follow':
+                Contact.objects.get_or_create(user_from=request.user,
+                                              user_to=user)
+            else:
+                Contact.objects.filter(user_from=request.user,
+                                       user_to=user).delete()
+            return JsonResponse({'status': 'ok'})
+        except User.DoesNotExist:
+            return JsonResponse({'status': 'error'})
+
+    return JsonResponse({'status': 'error'})
+```
+`urls.py`:
+```python
+# 用户follow.
+path('users/follow', views.user_follow, name='user_follow'),
+```
+template的`detail.html`:
+```html
+{% block domready %}
+  $('a.follow').click(function(e) {
+    e.preventDefault();
+
+    $.post('{% url "user_follow" %}',
+      {
+        id: $(this).data('id'),
+        action: $(this).data('action')
+      },
+      function(data) {
+        if (data['status'] == 'ok') {
+          var previous_action = $('a.follow').data('action');
+          <!-- 切换data的action.-->
+          $('a.follow').data('action', previous_action == 'follow'? 'unfollow' : 'follow');
+          <!--切换链接文本.-->
+          $('a.follow').text(previous_action == 'follow'? 'Unfollow' : 'Follow');
+          <!--更新总的follow数.-->
+          var previous_followers = parseInt($('span.count .total').text());
+          $('span.count .total').text(previous_action == 'follow'? previous_followers + 1 : previous_followers - 1);
+        }
+      }
+    );
+  });
+{% endblock %}
+```
+访问网页, 进行验证.

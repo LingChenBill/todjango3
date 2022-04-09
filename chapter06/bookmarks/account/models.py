@@ -29,7 +29,7 @@ class Contact(models.Model):
     你想存储建立关系的时间.
     """
     # 创建关系的用户的外键.
-    user_form = models.ForeignKey('auth.User',
+    user_from = models.ForeignKey('auth.User',
                                   related_name='rel_from_set',
                                   on_delete=models.CASCADE)
     # 被跟踪用户的外键.
@@ -44,7 +44,7 @@ class Contact(models.Model):
         ordering = ('-created',)
 
     def __str__(self):
-        return f'{self.user_form} follows {self.user_to}'
+        return f'{self.user_from} follows {self.user_to}'
 
 
 # 向用户动态添加以下字段.
