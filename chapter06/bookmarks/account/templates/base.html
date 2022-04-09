@@ -1,0 +1,92 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en"><!-- Noncompliant -->
+<head>
+  <title>{% block title %}{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/base.css' %}">
+</head>
+
+<body>
+  <div id="header">
+    <span class="logo">Bookmarks</span>
+    <!--用户nav设置.-->
+    {% if request.user.is_authenticated %}
+      <ul class="menu">
+        <li {% if section == "dashboard" %}class="selected"{% endif %}>
+          <a href="{% url 'dashboard' %}">My dashboard</a>
+        </li>
+        <li {% if section == "images" %}class="selected"{% endif %}>
+        <a href="#">Images</a>
+        </li>
+        <li {% if section == "people" %}class="selected"{% endif %}>
+        <a href="#">People</a>
+        </li>
+      </ul>
+    {% endif %}
+
+    <span class="user">
+      {% if request.user.is_authenticated %}
+        <!--Hello, {{ request.user.first_name }}-->
+        Hello
+        <!--用户图片设置.-->
+        <img src="https://localhost:8000/media/{{request.user.profile.photo}}" height="15px;" />
+        {{ request.user.username }},
+        <a href="{% url 'logout' %}">Logout</a>
+      {% else %}
+        <a href="{% url 'login' %}">Log-in</a>
+      {% endif %}
+    </span>
+  </div>
+
+  <!--message设置.-->
+  <!--消息框架包括上下文处理器django.contrib. messages.context_processors.messages，-->
+  <!--它将messages变量添加到请求上下文中. 可以在项目TEMPLATES设置的上下文列表中找到它.-->
+  <!--可以使用模板中的messages变量向用户显示所有现有消息.-->
+  {% if messages %}
+    <ul class="messages">
+      {% for message in messages %}
+        <li class="{{ message.tags }}">
+          {{ message | safe }}
+          <a href="#" class="close">x</a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  <div id="content">
+    {% block content %}
+    {% endblock %}
+  </div>
+
+  <script src="{% static 'js/jquery.min.js' %}"></script>
+  <!--JS Cookie是一个用于处理Cookie的轻量级JavaScript API.-->
+  <script src="{% static 'js/js.cookie.min.js' %}"></script>
+  <script>
+    // 获取csrf_token.
+    var csrftoken = Cookies.get('csrftoken');
+
+    function csrfSafeMethod(method) {
+        // 这些HTTP方法不需要CSRF保护.
+        return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+    }
+
+    // 您可以使用$.ajaxSetup来处理jQuery AJAX请求.
+    // 如果执行请求，则检查请求方法是否安全，以及当前请求是否跨域.
+    // 如果请求不安全，则使用从cookie获得的值设置X-CSRFToken头.
+    // 此设置将应用于使用jQuery执行的所有AJAX请求.
+    $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+            if (!csrfSafeMethod(settings.type) && !this.crossOrigin) {
+                xhr.setRequestHeader('X-CSRFToken', csrftoken);
+            }
+        }
+    });
+
+    $(document).ready(function(){
+      {% block domready %}
+      {% endblock %}
+    });
+  </script>
+</body>
+</html>

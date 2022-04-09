@@ -1,0 +1,21 @@
+<!--加载缩略图.-->
+{% load thumbnail %}
+
+{% for image in images %}
+  <div class="image">
+    <a href="{{ image.get_absolute_url }}">
+      <!--你在图像上迭代并为每个图像生成一个方形缩略图.将缩略图的大小规格化为300x300像素.-->
+      <!--还可以使用智能裁剪选项, 此选项表示必须通过从熵最小的边缘移除切片，将图像增量裁剪到所需大小.-->
+      {% thumbnail image.image 300x300 crop="smart" as im %}
+
+      <a href="{{ image.get_absolute_url }}">
+        <img src="{{ im.url }}">
+      </a>
+    </a>
+    <div class="info">
+      <a href="{{ image.get_absolute_url }}" class="title">
+        {{ image.title }}
+      </a>
+    </div>
+  </div>
+{% endfor %}
