@@ -492,7 +492,6 @@ def dashboard(request):
 ```html
 https://localhost:8000/account/
 ```
-
 ####9.创建images的用户总喜欢数.
 `models.py`:
 ```python
@@ -556,4 +555,179 @@ for image in Image.objects.all():
 在网页中, 可以验证:
 ```html
 https://localhost:8000/admin/images/image/
+```
+####11.redis安装(docker)
+```bash
+
+
+```
+```bash
+docker pull redis:5.0.8
+
+# 启动redis.
+docker run -itd --name redis-bookmark -p 6379:6379 redis:5.0.8
+
+# 查看redis启动状态.
+docker ps
+
+# 连接redis-cli,测试redis.
+docker exec -it redis-bookmark /bin/bash
+redis-cli
+
+# redis基本命令:
+127.0.0.1:6379> SET name "Peter"
+OK
+127.0.0.1:6379> GET name
+"Peter"
+127.0.0.1:6379> EXISTS name
+(integer) 1
+127.0.0.1:6379> EXPIRE name 2
+(integer) 1
+127.0.0.1:6379> GET name
+(nil)
+127.0.0.1:6379> SET total 1
+OK
+127.0.0.1:6379> GET total
+"1"
+127.0.0.1:6379> DEL total
+(integer) 1
+127.0.0.1:6379> GET total
+(nil)
+```
+####12.安装redis依赖.
+```bash
+pip install redis
+```
+redis python官网:
+```text
+https://redis-py.readthedocs.io/en/stable/
+```
+####13.redis-py的shell验证:
+```bash
+python manage.py shell
+
+In [1]: import redis
+
+In [2]: r = redis.Redis(host='localhost', port=6379, db=0)
+
+In [3]: r.set('foo', 'bar')
+Out[3]: True
+
+In [4]: r.get('foo')
+Out[4]: b'bar'
+```
+####14.运用redis来计数图片的views数.
+`settting.py`中, `redis`配置:
+```python
+# redis配置.
+REDIS_HOST = 'localhost'
+REDIS_PORT = 6379
+REDIS_DB = 0
+```
+`views.py`中使用redis:
+```python
+import redis
+from django.conf import settings
+
+# redis连接配置.
+r = redis.Redis(host=settings.REDIS_HOST,
+                port=settings.REDIS_PORT,
+                db=settings.REDIS_DB)
+
+def image_detail(request, id, slug):
+    """
+    图片详细信息.
+    :param request:
+    :param id:
+    :param slug:
+    :return:
+    """
+    image = get_object_or_404(Image, id=id, slug=slug)
+
+    # 将总图像视图增加1.
+    # 使用incr命令将给定键的值递增1. 如果key不存在，incr命令将创建它. incr()方法在执行操作后返回键的最终值.
+    # 使用符号构建Redis键，例如object type:id:field（例如，image:33:id）.
+    total_views = r.incr(f'image:{image.id}:views')
+
+    return render(request,
+                  'images/image/detail.html',
+                  {'section': 'images',
+                   'image': image,
+                   'total_views': total_views})
+```
+修改templates, `detail.html`:
+```html
+<span class="count">
+  {{ total_views }} view{{ total_views | pluralize }}
+</span>
+```
+在网址中验证, 图片views的计数:
+```text
+python manage.py runserver_plus --cert-file cert.crt
+
+https://localhost:8000/images/
+
+点击图片, 可以看图片计数.
+```
+
+
+
+####15.图片排名.
+在`views.py`的image_detail的方法中, 加入:
+```python
+# 图片排名, 每次递增1.
+# 使用zincrby()命令以带有image:ranking键的排序集存储图像视图.
+r.zincrby('image_ranking', 1, image.id)
+```
+新建一个图片排名的view方法:
+```python
+@login_required
+def image_ranking(request):
+    """
+    图片的views排名.
+    :param request:
+    :return:
+    """
+    # 获取图片排名字典.
+    # 使用zrange()命令获取排序集中的元素.
+    # 命令要求根据最低和最高分数设置一个自定义范围.
+    # 使用0作为最低分数，使用-1作为最高分数，可以告诉Redis返回排序集中的所有元素.
+    # 还可以指定desc=True来检索按分数降序排列的元素. 最后，使用[:10]对结果进行切片，以获得得分最高的前10个元素.
+    image_ranking = r.zrange('image_ranking', 0, -1, desc=True)[:10]
+
+    # 建立一个返回图像ID的列表，并将其存储在图像ID中变量作为整数列表.
+    image_ranking_ids = [int(id) for id in image_ranking]
+
+    # 根据图像排序中的外观index对图像对象进行排序. 可以使用模板中查看次数最多的列表来显示10张查看次数最多的图像。
+    most_viewed = list(Image.objects.filter(id__in=image_ranking_ids))
+    most_viewed.sort(key=lambda x: image_ranking_ids.index(x.id))
+
+    return render(request,
+                  'images/image/ranking.html',
+                  {'section': 'images',
+                   'most_viewed': most_viewed})
+```
+新建图片排名的templates, `ranking.html`:
+```html
+{% extends "base.html" %}
+
+{% block title %}Images ranking{% endblock %}
+
+{% block content %}
+  <h1>Images ranking</h1>
+
+  <ol>
+    {% for image in most_viewed %}
+      <li>
+        <a href="{{ image.get_absolute_url }}">
+          {{ image.title }}
+        </a>
+      </li>
+    {% endfor %}
+  </ol>
+{% endblock %}
+```
+在网址中, 重复查看不同的图片后, 访问网址, 查看图片排名:
+```text
+https://localhost:8000/images/ranking/
 ```

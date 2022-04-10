@@ -9,6 +9,14 @@ from .models import Image
 from common.decorators import ajax_required
 from actions.utils import create_action
 
+import redis
+from django.conf import settings
+
+# redis连接配置.
+r = redis.Redis(host=settings.REDIS_HOST,
+                port=settings.REDIS_PORT,
+                db=settings.REDIS_DB)
+
 # Create your views here.
 
 
@@ -50,10 +58,21 @@ def image_detail(request, id, slug):
     :return:
     """
     image = get_object_or_404(Image, id=id, slug=slug)
+
+    # 将总图像视图增加1.
+    # 使用incr命令将给定键的值递增1. 如果key不存在，incr命令将创建它. incr()方法在执行操作后返回键的最终值.
+    # 使用符号构建Redis键，例如object type:id:field（例如，image:33:id）.
+    total_views = r.incr(f'image:{image.id}:views')
+
+    # 图片排名, 每次递增1.
+    # 使用zincrby()命令以带有image:ranking键的排序集存储图像视图.
+    r.zincrby('image_ranking', 1, image.id)
+
     return render(request,
                   'images/image/detail.html',
                   {'section': 'images',
-                   'image': image})
+                   'image': image,
+                   'total_views': total_views})
 
 
 @ajax_required
@@ -121,4 +140,31 @@ def image_list(request):
                   'images/image/list.html',
                   {'section': 'images',
                    'images': images})
+
+
+@login_required
+def image_ranking(request):
+    """
+    图片的views排名.
+    :param request:
+    :return:
+    """
+    # 获取图片排名字典.
+    # 使用zrange()命令获取排序集中的元素.
+    # 命令要求根据最低和最高分数设置一个自定义范围.
+    # 使用0作为最低分数，使用-1作为最高分数，可以告诉Redis返回排序集中的所有元素.
+    # 还可以指定desc=True来检索按分数降序排列的元素. 最后，使用[:10]对结果进行切片，以获得得分最高的前10个元素.
+    image_ranking = r.zrange('image_ranking', 0, -1, desc=True)[:10]
+
+    # 建立一个返回图像ID的列表，并将其存储在图像ID中变量作为整数列表.
+    image_ranking_ids = [int(id) for id in image_ranking]
+
+    # 根据图像排序中的外观index对图像对象进行排序. 可以使用模板中查看次数最多的列表来显示10张查看次数最多的图像。
+    most_viewed = list(Image.objects.filter(id__in=image_ranking_ids))
+    most_viewed.sort(key=lambda x: image_ranking_ids.index(x.id))
+
+    return render(request,
+                  'images/image/ranking.html',
+                  {'section': 'images',
+                   'most_viewed': most_viewed})
 

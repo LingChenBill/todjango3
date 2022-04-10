@@ -17,4 +17,6 @@ urlpatterns = [
     path('like/', views.image_like, name='like'),
     # 图片列表.
     path('', views.image_list, name='list'),
+    # 图片排名.
+    path('ranking/', views.image_ranking, name='ranking'),
 ]
