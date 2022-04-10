@@ -202,3 +202,125 @@ template的`detail.html`:
 {% endblock %}
 ```
 访问网页, 进行验证.
+
+####6.创建actions的app应用.
+```bash
+python manage.py startapp actions
+```
+`settings.py`中配置apps:
+```python
+'actions.apps.ActionsConfig',
+```
+创建actions的model,`models.py`:
+```python
+from django.db import models
+
+# Create your models here.
+class Action(models.Model):
+    """
+    创建action的model, 储存用户活动.
+    """
+    # 执行操作的用户, 这是Django的外键用户模型.
+    user = models.ForeignKey('auth.User',
+                             related_name='actions',
+                             db_index=True,
+                             on_delete=models.CASCADE)
+
+    # 描述用户执行的操作的动词.
+    verb = models.CharField(max_length=255)
+    created = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ('-created',)
+```
+####7.ContentTypes的框架.
+```python
+'django.contrib.contenttypes',
+```
+在shell中验证:
+```bash
+python manage.py shell
+
+from django.contrib.contenttypes.models import ContentType
+image_type = ContentType.objects.get(app_label='images', model='image')
+
+image_type
+<ContentType: images | image>
+
+image_type.model_class()
+images.models.Image
+
+from images.models import Image
+ContentType.objects.get_for_model(Image)
+<ContentType: images | image>
+```
+在model中补充contenttypes内容, `models.py`:
+```python
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes.fields import GenericForeignKey
+
+
+# 指向ContentType模型的ForeignKey字段.
+target_ct = models.ForeignKey(ContentType,
+                              blank=True,
+                              null=True,
+                              related_name='target_obj',
+                              on_delete=models.CASCADE)
+# 一个用于存储相关对象.
+target_id = models.PositiveIntegerField(null=True,
+                                        blank=True,
+                                        db_index=True)
+# 基于前两个字段的组合.
+# Django不会在数据库中为GenericForeignKey field创建任何字段.
+# 映射到数据库field的唯一field是target_ct和target_id.
+# 这两个field都有blank=True和null=True属性，因此保存操作对象时不需要目标对象.
+target = GenericForeignKey('target_ct', 'target_id')
+```
+数据迁移:
+```bash
+python manage.py makemigrations actions
+
+python manage.py migrate actions
+```
+将action注册到admin中,`admin.py`:
+```python
+from django.contrib import admin
+from .models import Action
+
+# Register your models here.
+
+
+@admin.register(Action)
+class ActionAdmin(admin.ModelAdmin):
+    """
+    将Action注册到admin管理中.
+    """
+    list_display = ('user', 'verb', 'target', 'created')
+    list_filter = ('created',)
+    search_fields = ('verb',)
+```
+在网页端验证:
+```bash
+python manage.py runserver_plus --cert-file cert.crt
+
+https://localhost:8000/admin/actions/action/add/
+```
+创建action的utils方法:
+```python
+from django.contrib.contenttypes.models import ContentType
+from .models import Action
+
+
+def create_action(user, verb, target=None):
+    """
+    创建action.
+    允许您创建可选包含目标对象的操作.
+    您可以在代码中的任何位置使用此函数作为向活动流添加新操作的快捷方式.
+    :param user:
+    :param verb:
+    :param target:
+    :return:
+    """
+    action = Action(user=user, verb=verb, target=target)
+    action.save()
+```
