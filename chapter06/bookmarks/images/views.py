@@ -7,6 +7,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from .forms import ImageCreateForm
 from .models import Image
 from common.decorators import ajax_required
+from actions.utils import create_action
 
 # Create your views here.
 
@@ -24,6 +25,9 @@ def image_create(request):
             # 将图片绑定用户.
             new_item.user = request.user
             new_item.save()
+
+            # 储存图片创建操作.
+            create_action(request.user, 'bookmarked image', new_item)
             messages.success(request, 'Image added successfully.')
 
             # 将用户重定向到新图像的规范URL. 你还没有实现了图像模型的get_absolute_url()方法, 你会以后再做.
@@ -71,6 +75,8 @@ def image_like(request):
             image = Image.objects.get(id=image_id)
             if action == 'like':
                 image.users_like.add(request.user)
+                # 储存用户like操作.
+                create_action(request.user, 'likes', image)
             else:
                 image.users_like.remove(request.user)
             return JsonResponse({'status': 'ok'})

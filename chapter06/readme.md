@@ -202,7 +202,6 @@ template的`detail.html`:
 {% endblock %}
 ```
 访问网页, 进行验证.
-
 ####6.创建actions的app应用.
 ```bash
 python manage.py startapp actions
@@ -323,4 +322,173 @@ def create_action(user, verb, target=None):
     """
     action = Action(user=user, verb=verb, target=target)
     action.save()
+```
+####8.创建用户操作.
+在各个create view中的creat操作后, 添加create_action操作.
+```python
+views.py
+
+# 储存用户like操作.
+create_action(request.user, 'likes', image)
+
+# 储存图片创建操作.
+create_action(request.user, 'bookmarked image', new_item)
+
+# 储存用户follow操作行为.
+create_action(request.user, 'is following', user)
+
+from actions.models import Action
+
+@login_required
+def dashboard(request):
+    """
+    用户登录dashboard.
+    login_required decorator检查当前用户是否经过身份验证.
+    如果用户经过身份验证，则执行装饰视图;
+    如果用户未通过身份验证，它会将用户重定向到登录URL，并将最初请求的URL作为名为next的GET参数.
+    添加用户操作actions.
+    :param request:
+    :return:
+    """
+    # 从数据库中检索所有操作，当前用户执行的操作除外.
+    actions = Action.objects.exclude(user=request.user)
+    # 如果用户正在跟踪其他用户，则可以将查询限制为仅检索他们跟踪的用户执行的操作.
+    following_ids = request.user.following.values_list('id', flat=True)
+
+    if following_ids:
+        actions = actions.filter(user_id__in=following_ids)
+    # 限制10个查询结果.
+    actions = actions[:10]
+
+    # 还可以定义一个section变量. 您将使用此变量跟踪用户正在浏览的站点部分.
+    return render(request, 'account/dashboard.html', {'section': 'dashboard',
+                                                      'actions': actions})
+```
+`utils.py`:
+```python
+import datetime
+from django.utils import timezone
+from django.contrib.contenttypes.models import ContentType
+from .models import Action
+
+
+def create_action(user, verb, target=None):
+    """
+    创建action.
+    允许您创建可选包含目标对象的操作.
+    您可以在代码中的任何位置使用此函数作为向活动流添加新操作的快捷方式.
+    避免保存重复的操作，并返回布尔值来告诉您是否保存了该操作.
+    :param user:
+    :param verb:
+    :param target:
+    :return:
+    """
+    now = timezone.now()
+
+    # 使用last_minute变量存储一分钟后的日期时间并检索用户此后执行的任何相同操作.
+    last_minute = now - datetime.timedelta(seconds=60)
+    similar_actions = Action.objects.filter(user_id=user.id, verb=verb, created__gte=last_minute)
+
+    if target:
+        target_ct = ContentType.objects.get_for_model(target)
+        similar_actions = similar_actions.filter(target_ct=target_ct, target_id=target.id)
+
+    if not similar_actions:
+        action = Action(user=user, verb=verb, target=target)
+        action.save()
+        return True
+    return False
+```
+在`account/views.py`中的`dashboard`方法中添加actions操作:
+```python
+@login_required
+def dashboard(request):
+    """
+    用户登录dashboard.
+    login_required decorator检查当前用户是否经过身份验证.
+    如果用户经过身份验证，则执行装饰视图;
+    如果用户未通过身份验证，它会将用户重定向到登录URL，并将最初请求的URL作为名为next的GET参数.
+    添加用户操作actions.
+    :param request:
+    :return:
+    """
+    # 从数据库中检索所有操作，当前用户执行的操作除外.
+    actions = Action.objects.exclude(user=request.user)
+    # 如果用户正在跟踪其他用户，则可以将查询限制为仅检索他们跟踪的用户执行的操作.
+    following_ids = request.user.following.values_list('id', flat=True)
+
+    if following_ids:
+        actions = actions.filter(user_id__in=following_ids)
+    # 限制10个查询结果.
+    # actions = actions[:10]
+
+    # select_related方法允许您检索一对多关系的相关对象.
+    # 该方法适用于ForeignKey和OneToOne FIELD. 它的工作原理是执行SQL联接，并在SELECT语句中包含相关对象的field.
+    # actions = actions.select_related('user', 'user__profile')[:10]
+
+    # prefetch_related()方法适用于多对多和多对一关系, 对每个关系执行单独的查找，并使用Python连接结果.
+    # 此方法还支持预取GenericRelation和GenericForeignKey.
+    actions = actions.select_related('user', 'user__profile').prefetch_related('target')[:10]
+
+    # 还可以定义一个section变量. 您将使用此变量跟踪用户正在浏览的站点部分.
+    return render(request, 'account/dashboard.html', {'section': 'dashboard',
+                                                      'actions': actions})
+```
+创建actions的templates,`detail.html`:
+```html
+{% load thumbnail %}
+
+{% with user=action.user profile=action.user.profile %}
+  <div class="action">
+    <div class="images">
+      {% if profile.photo %}
+        {% thumbnail user.profile.photo "80x80" crop="100%" as im %}
+        <a href="{{ user.get_absolute_url }}">
+          <img src="{{ im.url }}" alt="{{ user.get_full_name }}" class="item-img">
+        </a>
+      {% endif %}
+
+      {% if action.target %}
+        {% with target=action.target %}
+          {% if target.image %}
+            {% thumbnail target.image "80x80" crop="100%" as im %}
+            <a href="{{ target.get_absolute_url }}">
+              <img src="{{ im.url }}" class="item-img">
+            </a>
+          {% endif %}
+        {% endwith %}
+      {% endif %}
+    </div>
+
+    <div class="info">
+      <p>
+        <span class="date">{{ action.created | timesince }} ago</span>
+        <br />
+        <a href="{{ user.get_absolute_url }}">
+          {{ user.first_name }}
+        </a>
+        {{ action.verb }}
+        {% if action.target %}
+          {% with target=action.target %}
+            <a href="{{ target.get_absolute_url }}">{{ target }}</a>
+          {% endwith %}
+        {% endif %}
+      </p>
+    </div>
+  </div>
+{% endwith %}
+```
+在`dashboard.html`中添加actions展示内容.
+```html
+<h2>What's happening</h2>
+
+<div id="action-list">
+{% for action in actions %}
+  {% include "actions/action/detail.html" %}
+{% endfor %}
+</div>
+```
+访问网址, 以不同用户操作图片, like, follow操作等, 再用一个不同的用户登入, 在dashboard页面中查看actions操作结果.
+```html
+https://localhost:8000/account/
 ```

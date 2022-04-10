@@ -8,6 +8,8 @@ from django.views.decorators.http import require_POST
 from .forms import LoginForm, UserRegistrationForm, UserEditForm, ProfileEditForm
 from .models import Profile, Contact
 from common.decorators import ajax_required
+from actions.utils import create_action
+from actions.models import Action
 
 # Create your views here.
 
@@ -51,11 +53,31 @@ def dashboard(request):
     login_required decorator检查当前用户是否经过身份验证.
     如果用户经过身份验证，则执行装饰视图;
     如果用户未通过身份验证，它会将用户重定向到登录URL，并将最初请求的URL作为名为next的GET参数.
+    添加用户操作actions.
     :param request:
     :return:
     """
+    # 从数据库中检索所有操作，当前用户执行的操作除外.
+    actions = Action.objects.exclude(user=request.user)
+    # 如果用户正在跟踪其他用户，则可以将查询限制为仅检索他们跟踪的用户执行的操作.
+    following_ids = request.user.following.values_list('id', flat=True)
+
+    if following_ids:
+        actions = actions.filter(user_id__in=following_ids)
+    # 限制10个查询结果.
+    # actions = actions[:10]
+
+    # select_related方法允许您检索一对多关系的相关对象.
+    # 该方法适用于ForeignKey和OneToOne FIELD. 它的工作原理是执行SQL联接，并在SELECT语句中包含相关对象的field.
+    # actions = actions.select_related('user', 'user__profile')[:10]
+
+    # prefetch_related()方法适用于多对多和多对一关系, 对每个关系执行单独的查找，并使用Python连接结果.
+    # 此方法还支持预取GenericRelation和GenericForeignKey.
+    actions = actions.select_related('user', 'user__profile').prefetch_related('target')[:10]
+
     # 还可以定义一个section变量. 您将使用此变量跟踪用户正在浏览的站点部分.
-    return render(request, 'account/dashboard.html', {'section': 'dashboard'})
+    return render(request, 'account/dashboard.html', {'section': 'dashboard',
+                                                      'actions': actions})
 
 
 def register(request):
@@ -74,6 +96,9 @@ def register(request):
 
             # 用户配置信息.
             Profile.objects.create(user=new_user)
+
+            # 储存用户创建操作.
+            create_action(new_user, 'has created an account')
 
             return render(request,
                           'account/register_done.html',
@@ -164,6 +189,9 @@ def user_follow(request):
             if action == 'follow':
                 Contact.objects.get_or_create(user_from=request.user,
                                               user_to=user)
+
+                # 储存用户follow操作行为.
+                create_action(request.user, 'is following', user)
             else:
                 Contact.objects.filter(user_from=request.user,
                                        user_to=user).delete()
