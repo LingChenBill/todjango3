@@ -492,3 +492,68 @@ def dashboard(request):
 ```html
 https://localhost:8000/account/
 ```
+
+####9.创建images的用户总喜欢数.
+`models.py`:
+```python
+# 总喜欢数.存储喜欢每张图片的用户总数. 当您希望按计数过滤或排序查询集时，反规范化计数非常有用.
+total_likes = models.PositiveIntegerField(db_index=True, default=0)
+```
+数据迁移:
+```bash
+python manage.py makemigrations images
+
+python manage.py migrate images
+```
+####10.用户总喜欢数的信号.
+创建`signals.py`:
+```python
+from django.db.models.signals import m2m_changed
+from django.dispatch import receiver
+from .models import Image
+
+
+@receiver(m2m_changed, sender=Image.users_like.through)
+def users_like_changed(sender, instance, **kwargs):
+    """
+    使用receiver() decorator将users_like_changed函数注册为receiver函数, 将其连接到m2m_changed.
+    然后，将函数连接到Image.users_like. 通过，以便仅当此发送器已启动m2m_changed信号时才调用该函数.
+    有另一种注册接收器功能的方法；它包括使用Signal对象的connect()方法.
+    :param sender:
+    :param instance:
+    :param kwargs:
+    :return:
+    """
+    instance.total_likes = instance.users_like.count()
+    instance.save()
+```
+在`apps.py`中,引入signal信号.
+```python
+from django.apps import AppConfig
+
+
+class ImagesConfig(AppConfig):
+    # default_auto_field = 'django.db.models.BigAutoField'
+    name = 'images'
+
+    def ready(self):
+        """
+        导入signal处理器.
+        :return:
+        """
+        import images.signals
+```
+在`shell`中,将total_likes进行更新:
+```bash
+python manage.py shell
+
+from images.models import Image
+
+for image in Image.objects.all():
+  image.total_likes = image.users_like.count()
+  image.save()
+```
+在网页中, 可以验证:
+```html
+https://localhost:8000/admin/images/image/
+```

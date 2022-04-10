@@ -35,6 +35,9 @@ class Image(models.Model):
                                         related_name='images_likes',
                                         blank=True)
 
+    # 总喜欢数.存储喜欢每张图片的用户总数. 当您希望按计数过滤或排序查询集时，反规范化计数非常有用.
+    total_likes = models.PositiveIntegerField(db_index=True, default=0)
+
     def __str__(self):
         return self.title
 
