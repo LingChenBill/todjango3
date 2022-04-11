@@ -1,4 +1,5 @@
 from django.db import models
+from django.urls import reverse
 
 # Create your models here.
 
@@ -18,6 +19,15 @@ class Category(models.Model):
 
     def __str__(self):
         return self.name
+
+    def get_absolute_url(self):
+        """
+        get_absolute_url()是检索给定对象的url的约定.
+        在这里，您使用的是您刚刚在URL中定义的URL模式.
+        :return:
+        """
+        return reverse('shop:product_list_by_category',
+                       args=[self.slug])
 
 
 class Product(models.Model):
@@ -52,3 +62,7 @@ class Product(models.Model):
 
     def __str__(self):
         return self.name
+
+    def get_absolute_url(self):
+        return reverse('shop:product_detail',
+                       args=[self.id, self.slug])
