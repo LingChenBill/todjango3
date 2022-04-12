@@ -116,3 +116,65 @@ urlpatterns = [
 ```text
 http://localhost:8000/
 ```
+
+####8.创建购物车cart app.
+```bash
+python manage.py startapp cart
+```
+将cart app加入到apps的`settings.py`中:
+```python
+'cart.apps.CartConfig',
+
+# 购物车session key.
+# 将购物车存储在用户会话中. 由于Django会话是按访客管理的，因此可以对所有会话使用相同的购物车会话密钥.
+CART_SESSION_ID = 'cart'
+```
+####9.新建购物车的操作类.
+`cart.py`:
+```python
+from decimal import Decimal
+from django.conf import settings
+from shop.models import Product
+
+
+class Cart(object):
+    xxxxxx
+```
+
+新建购物车相关的views, urls:
+```text
+chapter07/myshop/cart/urls.py
+chapter07/myshop/cart/views.py
+```
+购物车的detail页面:
+```text
+chapter07/myshop/cart/templates/cart/detail.html
+```
+更新shop的urls, 包括购物车的urls:
+```text
+chapter07/myshop/myshop/urls.py
+
+# 商品urls.
+path('', include('shop.urls', namespace='shop')),
+```
+更新商品的detail的views:
+```python
+def product_detail(request, id, slug):
+    """
+    商品详细页面.
+    id和slug参数以检索产品实例.
+    :param request:
+    :param id:
+    :param slug:
+    :return:
+    """
+    # 仅通过ID获取此实例，因为它是唯一的属性. 但是，您可以在URL中包含slug，以便为产品构建SEO友好的URL.
+    product = get_object_or_404(Product, id=id, slug=slug, available=True)
+
+    cart_product_form = CartAddProductForm()
+
+    return render(request,
+                  'shop/product/detail.html',
+                  {'product': product,
+                   'cart_product_form': cart_product_form})
+```

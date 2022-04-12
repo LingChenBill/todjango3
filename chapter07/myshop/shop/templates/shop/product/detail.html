@@ -18,6 +18,15 @@
     </h2>
 
     <p class="price">¥{{ product.price }}</p>
+
+    <!--将商品添加到购物车.-->
+    <form action="{% url 'cart:cart_add' product.id %}" method="post">
+      {{ cart_product_form }}
+      {% csrf_token %}
+
+      <input type="submit" value="Add to cart" />
+    </form>
+
     {{ product.description | linebreaks }}
   </div>
 {% endblock %}

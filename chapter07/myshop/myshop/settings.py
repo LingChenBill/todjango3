@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'shop.apps.ShopConfig',
+    'cart.apps.CartConfig',
 ]
 
 MIDDLEWARE = [
@@ -133,3 +134,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # MEDIA_ROOT是这些文件所在的本地路径，您可以通过动态预加BASE_DIR变量来构建它.
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
+
+# 购物车session key.
+# 将购物车存储在用户会话中. 由于Django会话是按访客管理的，因此可以对所有会话使用相同的购物车会话密钥.
+CART_SESSION_ID = 'cart'
