@@ -56,6 +56,13 @@ def cart_detail(request):
     """
     cart = Cart(request)
 
+    # 为购物车中的每个商品创建CartAddProductForm实例，以允许更改产品数量.
+    # 使用当前物料数量初始化表单，并将覆盖字段设置为True，这样当您将表单提交到cart_add视图时，当前数量将替换为新数量.
+    for item in cart:
+        item['update_quantity_form'] = CartAddProductForm(initial={
+            'quantity': item['quantity'],
+            'override': True})
+
     return render(request,
                   'cart/detail.html',
                   {'cart': cart})

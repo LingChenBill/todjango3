@@ -116,7 +116,6 @@ urlpatterns = [
 ```text
 http://localhost:8000/
 ```
-
 ####8.创建购物车cart app.
 ```bash
 python manage.py startapp cart
@@ -177,4 +176,86 @@ def product_detail(request, id, slug):
                   'shop/product/detail.html',
                   {'product': product,
                    'cart_product_form': cart_product_form})
+```
+
+####10.更新购物车中的数量.
+`views.py`:
+```python
+def cart_detail(request):
+    """
+    显示购物车商品信息.
+    :param request:
+    :return:
+    """
+    cart = Cart(request)
+
+    # 为购物车中的每个商品创建CartAddProductForm实例，以允许更改产品数量.
+    # 使用当前物料数量初始化表单，并将覆盖字段设置为True，这样当您将表单提交到cart_add视图时，当前数量将替换为新数量.
+    for item in cart:
+        item['update_quantity_form'] = CartAddProductForm(initial={
+            'quantity': item['quantity'],
+            'override': True})
+
+    return render(request,
+                  'cart/detail.html',
+                  {'cart': cart})
+```
+修改templates的`cart/detail.html`:
+```html
+<!--{{ item.quantity }}-->
+<form action="{% url 'cart:cart_add' product.id %}" method="post">
+  {{ item.update_quantity_form.quantity }}
+  {{ item.update_quantity_form.override }}
+  {% csrf_token %}
+  <input type="submit" value="Update" />
+</form>
+```
+####11.创建购物车的上下文.创建`context_processors.py`:
+```python
+from .cart import Cart
+
+
+def cart(request):
+    """
+    在上下文处理器中，使用请求对象实例化cart，并将其作为名为cart的变量用于模板.
+    :param request:
+    :return:
+    """
+    return {'cart': Cart(request)}
+```
+配置`settings.py`:
+```python
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+                'cart.context_processors.cart',
+            ],
+        },
+    },
+]
+```
+修改`base.html`:
+```html
+<div id="subheader">
+  <div class="cart">
+    {% with total_items=cart|length %}
+      {% if total_items > 0 %}
+        Your cart:
+        <a href="{% url 'cart:cart_detail' %}">
+          {{ total_items }} item{{ total_items | pluralize }}, ¥{{ cart.get_total_price }}
+        </a>
+      {% else %}
+        Your cart is empty.
+      {% endif %}
+    {% endwith %}
+  </div>
+</div>
 ```
