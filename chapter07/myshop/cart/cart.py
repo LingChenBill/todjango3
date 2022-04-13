@@ -97,5 +97,5 @@ class Cart(object):
         清空购物车.
         :return:
         """
-        del self.session[settings.SESSION_ID]
+        del self.session[settings.CART_SESSION_ID]
         self.save()

@@ -177,7 +177,6 @@ def product_detail(request, id, slug):
                   {'product': product,
                    'cart_product_form': cart_product_form})
 ```
-
 ####10.更新购物车中的数量.
 `views.py`:
 ```python
@@ -258,4 +257,172 @@ TEMPLATES = [
     {% endwith %}
   </div>
 </div>
+```
+####12.创建订单app,orders
+```bash
+python manage.py startapp orders
+```
+创建订单model:
+```python
+from django.db import models
+from shop.models import Product
+
+# Create your models here.
+
+
+class Order(models.Model):
+    """
+    订单模型包含几个用于存储客户信息的field和一个默认为False的付费布尔field.
+    稍后，您将使用此字段来区分已付款订单和未付款订单.
+    """
+    first_name = models.CharField(max_length=50)
+    last_name = models.CharField(max_length=50)
+    email = models.EmailField()
+    address = models.CharField(max_length=250)
+    postal_code = models.CharField(max_length=20)
+    city = models.CharField(max_length=100)
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+
+    paid = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ('-created',)
+
+    def __str__(self):
+        return f'Order {self.id}'
+
+    def get_total_cost(self):
+        """
+        获取此订单中购买的物品的总成本.
+        :return:
+        """
+        return sum(item.get_cost() for item in self.items.all())
+
+
+class OrderItem(models.Model):
+    """
+    储存每件商品的产品、数量和价格.
+    """
+    order = models.ForeignKey(Order,
+                              related_name='items',
+                              on_delete=models.CASCADE)
+
+    product = models.ForeignKey(Product,
+                                related_name='order_items',
+                                on_delete=models.CASCADE)
+
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    quantity = models.PositiveIntegerField(default=1)
+
+    def __str__(self):
+        return str(self.id)
+
+    def get_cost(self):
+        """
+        获取商品的价格.
+        :return:
+        """
+        return self.price * self.quantity
+```
+数据迁移:
+```bash
+python manage.py makemigrations
+
+python manage.py migrate
+```
+####13.将order model加入到管理页面, `admin.py`:
+```python
+from django.contrib import admin
+from .models import Order, OrderItem
+
+# Register your models here.
+
+
+class OrderItemInline(admin.TabularInline):
+    """
+    使用OrderItem模型的ModelInline类将其作为内联包含在OrderAdmin类中.
+    内联允许您在与其相关模型相同的编辑页面上包含模型.
+    """
+    model = OrderItem
+    raw_id_fields = ['product']
+
+
+@admin.register(Order)
+class OrderAdmin(admin.ModelAdmin):
+    list_display = ['id', 'first_name', 'last_name', 'email', 'address', 'postal_code',
+                    'city', 'paid', 'created', 'updated']
+    list_filter = ['paid', 'created', 'updated']
+
+    inlines = [OrderItemInline]
+```
+在网页中验证:
+```bash
+python manage.py runserver
+
+http://127.0.0.1:8000/admin/orders/order/add/
+```
+####14.创建订单view url:
+```python
+from django.shortcuts import render
+from .models import OrderItem
+from .forms import OrderCreateForm
+from cart.cart import Cart
+
+# Create your views here.
+
+
+def order_create(request):
+    """
+    创建订单.
+    :param request:
+    :return:
+    """
+    # 使用cart=cart(request)从会话中获取当前购物车.
+    cart = Cart(request)
+
+    if request.method == 'POST':
+        form = OrderCreateForm(request.POST)
+
+        if form.is_valid():
+            order = form.save()
+            for item in cart:
+                OrderItem.objects.create(order=order,
+                                         product=item['product'],
+                                         price=item['price'],
+                                         quantity=item['quantity'])
+            # 清空购物车.
+            cart.clear()
+
+            return render(request,
+                          'orders/order/created.html',
+                          {'order': order})
+    else:
+        form = OrderCreateForm()
+
+    return render(request,
+                  'orders/order/create.html',
+                  {'cart': cart, 'form': form})
+```
+`urls.py`:
+```python
+from django.urls import path
+from . import views
+
+app_name = 'orders'
+
+urlpatterns = [
+    # 订单创建.
+    path('create/', views.order_create, name='order_create'),
+]
+```
+`chapter07/myshop/myshop/urls.py`:
+```python
+# 订单urls.
+path('orders/', include('orders.urls', namespace='orders')),
+```
+创建templates:
+```text
+chapter07/myshop/orders/templates/orders/order/create.html
+chapter07/myshop/orders/templates/orders/order/created.html
 ```

@@ -24,6 +24,8 @@ urlpatterns = [
     path('cart/', include('cart.urls', namespace='cart')),
     # 商品urls.
     path('', include('shop.urls', namespace='shop')),
+    # 订单urls.
+    path('orders/', include('orders.urls', namespace='orders')),
 ]
 
 if settings.DEBUG:
