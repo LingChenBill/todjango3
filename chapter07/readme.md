@@ -426,7 +426,6 @@ path('orders/', include('orders.urls', namespace='orders')),
 chapter07/myshop/orders/templates/orders/order/create.html
 chapter07/myshop/orders/templates/orders/order/created.html
 ```
-
 ####15.安装异步队列celery
 ```bash
 pip install celery
@@ -520,3 +519,20 @@ guest
 guest
 ```
 在`localhost:8000`中, 创建order订单, checkout后, 可以在控制台, 查看异步任务, email输出.
+
+####16.监控celery, 安装依赖:
+```bash
+pip install flower
+```
+启动工程, 和celery:
+```bash
+python manage.py runserver
+
+celery -A myshop worker -l info
+
+celery -A myshop flower
+```
+在flower的管理页面, 查看flower监控的celery情况:
+```text
+http://localhost:5555/
+```
