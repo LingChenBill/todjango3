@@ -426,3 +426,97 @@ path('orders/', include('orders.urls', namespace='orders')),
 chapter07/myshop/orders/templates/orders/order/create.html
 chapter07/myshop/orders/templates/orders/order/created.html
 ```
+
+####15.安装异步队列celery
+```bash
+pip install celery
+```
+配置celery, `chapter07/myshop/myshop/celery.py`:
+```python
+import os
+from celery import Celery
+
+# 为celery程序设置默认的Django设置模块.
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'myshop.settings')
+
+# 使用创建应用程序的实例.
+app = Celery('myshop')
+
+# namespace属性指定celery相关设置在设置中的settings.py文件.
+# 通过设置Celery名称空间，所有芹菜设置都需要包含celery名称中的前缀(例如CELERY_BROKER_URL).
+app.config_from_object('django.conf:settings', namespace='CELERY')
+
+# celery会寻找一种tasks.py文件为加载而添加到INSTALLED_APPS的异步任务.
+# 其中定义的异步任务。
+app.autodiscover_tasks()
+```
+在django启动时, 加载celery, `chapter07/myshop/myshop/__init__.py`:
+```python
+# 程序启动时, 加载celery.
+from .celery import app as celery_app
+```
+创建`chapter07/myshop/orders/tasks.py`:
+```python
+from myshop.celery import app
+from django.core.mail import send_mail
+from .models import Order
+
+
+@app.task
+def order_created(order_id):
+    """
+    订单异步任务创建.
+    celery任务只是一个用@task修饰的Python函数.任务函数接收订单id参数.
+    始终建议在执行任务时仅将ID传递给任务函数和查找对象.
+    可以使用Django提供的send_mail()函数向下订单的用户发送电子邮件通知.
+    :param order_id:
+    :return:
+    """
+    order = Order.objects.get(id=order_id)
+    subject = f'Order nr. {order_id}'
+
+    message = f'Dear {order.first_name}, \n\n' \
+              f'You have successfully placed an order.' \
+              f'Your order ID is {order_id}.'
+
+    mail_sent = send_mail(subject,
+                          message,
+                          'lingchen1316@163.com',
+                          [order.email])
+    return mail_sent
+```
+在`chapter07/myshop/myshop/settings.py`中, 配置email的控制台输出:
+```python
+# email console配置.
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+```
+在订单创建中, 添加异步任务``:
+```python
+from .tasks import order_created
+
+# 发布异步任务.
+order_created.delay(order.id)
+```
+docker中启动rabbitMQ:
+```bash
+% docker start 856
+856
+% docker ps
+CONTAINER ID   IMAGE                       COMMAND                  CREATED         STATUS         PORTS                                                                                                         NAMES
+8565ee9b241b   rabbitmq:3.8.9-management   "docker-entrypoint.s…"   17 months ago   Up 2 seconds   4369/tcp, 5671/tcp, 0.0.0.0:5672->5672/tcp, 15671/tcp, 15691-15692/tcp, 25672/tcp, 0.0.0.0:15672->15672/tcp   affectionate_lumiere
+```
+启动app:
+```bash
+python manage.py runserver
+
+# 启动celery
+celery -A myshop worker -l info
+```
+可以浏览器中, 查看rabbitMQ的管理页面:
+```text
+http://localhost:15672/
+
+guest
+guest
+```
+在`localhost:8000`中, 创建order订单, checkout后, 可以在控制台, 查看异步任务, email输出.

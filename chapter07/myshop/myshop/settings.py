@@ -140,3 +140,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
 # 购物车session key.
 # 将购物车存储在用户会话中. 由于Django会话是按访客管理的，因此可以对所有会话使用相同的购物车会话密钥.
 CART_SESSION_ID = 'cart'
+
+# email console配置.
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
