@@ -22,10 +22,12 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     # 购物车操作urls.
     path('cart/', include('cart.urls', namespace='cart')),
-    # 商品urls.
-    path('', include('shop.urls', namespace='shop')),
     # 订单urls.
     path('orders/', include('orders.urls', namespace='orders')),
+    # 交易urls.
+    path('payment', include('payment.urls', namespace='payment')),
+    # 商品urls.
+    path('', include('shop.urls', namespace='shop')),
 ]
 
 if settings.DEBUG:
