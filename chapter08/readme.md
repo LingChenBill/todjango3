@@ -163,3 +163,64 @@ https://developer.paypal.com/braintree/docs/reference/general/testing/#test-valu
 https://sandbox.braintreegateway.com/merchants/j47ygk4dfffnfnmz/transactions/advanced_search
 ```
 在订单生成后, 可以在orders_order表中, 可以看到沙箱中生成的交易id.
+
+####2.导出csv.
+在admin的order列表中加入一个导出csv的功能. `chapter08/myshop/orders/admin.py`:
+```python
+from django.http import HttpResponse
+import csv
+import datetime
+
+
+def export_to_csv(modeladmin, request, queryset):
+    """
+    csv导出.
+    :param modeladmin:
+    :param request:
+    :param queryset:
+    :return:
+    """
+    # 创建一个HttpResponse实例，指定text/csv内容
+    # 浏览器响应必须被视为CSV文件. 可以添加一个内容处置头，以指示HTTP响应包含附加的file.
+    opts = modeladmin.model._meta
+    content_disposition = f'attachment; filename={opts.verbose_name}.csv'
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = content_disposition
+
+    # 创建将写入响应对象的CSV编写器对象.
+    writer = csv.writer(response)
+
+    # 可以使用get_fields()方法动态获取模型field模型的meta选项. 排除多对多和一对多关系.
+    fields = [field for field in opts.get_fields() if not field.many_to_many and not field.one_to_many]
+
+    # 标题行.
+    writer.writerow([field.verbose_name for field in fields])
+
+    # 迭代给定的查询集，并为返回的每个对象写一行在QuerySet.
+    for obj in queryset:
+        data_row = []
+        for field in fields:
+            value = getattr(obj, field.name)
+            # 因为CSV的输出值必须是字符串，所以需要设置datetime对象的格式.
+            if isinstance(value, datetime.datetime):
+                value = value.strftime('%d/%m/%Y')
+
+            data_row.append(value)
+        writer.writerow(data_row)
+
+    return response
+# 在"操作"下拉列表中自定义操作的显示名称通过在函数上设置short_description属性来创建管理站点的元素.
+export_to_csv.short_description = 'Export to CSV'
+
+
+# 将export_to_csv管理操作添加到OrderAdmin类.
+actions = [export_to_csv]
+```
+在浏览器中验证:
+```text
+http://localhost:8000/admin/orders/order/
+```
+官网csv输出实例:
+```text
+https://docs.djangoproject.com/en/3.0/howto/outputting-csv/
+```
