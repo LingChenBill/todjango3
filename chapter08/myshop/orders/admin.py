@@ -1,5 +1,7 @@
 from django.contrib import admin
 from django.http import HttpResponse
+from django.urls import reverse
+from django.utils.safestring import mark_safe
 from .models import Order, OrderItem
 import csv
 import datetime
@@ -58,10 +60,24 @@ def export_to_csv(modeladmin, request, queryset):
 export_to_csv.short_description = 'Export to CSV'
 
 
+def order_detail(obj):
+    """
+    定制管理页面的订单详细页面.
+    将Order对象作为参数，并返回admin_Order_detail URL的HTML链接.
+    默认情况下，Django转义HTML输出.必须使用mark_safe功能以避免自动逃逸.
+    :param obj:
+    :return:
+    """
+    url = reverse('orders:admin_order_detail', args=[obj.id])
+    return mark_safe(f'<a href="{url}">View</a>')
+
+
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     list_display = ['id', 'first_name', 'last_name', 'email', 'address', 'postal_code',
-                    'city', 'paid', 'created', 'updated']
+                    'city', 'paid', 'created', 'updated',
+                    order_detail]
+
     list_filter = ['paid', 'created', 'updated']
 
     # 关联的商品订单item.

@@ -11,4 +11,6 @@ app_name = 'orders'
 urlpatterns = [
     # 订单创建.
     path('create/', views.order_create, name='order_create'),
+    # 自定制order管理页面.
+    path('admin/order/<int:order_id>/', views.admin_order_detail, name='admin_order_detail'),
 ]

@@ -224,3 +224,60 @@ http://localhost:8000/admin/orders/order/
 ```text
 https://docs.djangoproject.com/en/3.0/howto/outputting-csv/
 ```
+####3.定制管理页面的订单view画面
+`chapter08/myshop/orders/views.py`:
+```python
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.admin.views.decorators import staff_member_required
+
+
+@staff_member_required
+def admin_order_detail(request, order_id):
+    """
+    定制管理页面的订单详细页面.
+    staff_member_required decorator检查请求页面的用户的is_active和is_staff field是否都设置为True.
+    在这个视图中，将获得具有给定ID的Order对象，并呈现一个模板来显示订单.
+    :param request:
+    :param order_id:
+    :return:
+    """
+    order = get_object_or_404(Order, id=order_id)
+
+    return render(request,
+                  'admin/orders/order/detail.html',
+                  {'order': order})
+
+```
+配置url,`chapter08/myshop/orders/urls.py`:
+```python
+# 自定制order管理页面.
+path('admin/order/<int:order_id>/', views.admin_order_detail, name='admin_order_detail'),
+```
+管理页面,`chapter08/myshop/orders/admin.py`:
+```python
+from django.urls import reverse
+from django.utils.safestring import mark_safe
+
+
+def order_detail(obj):
+    """
+    定制管理页面的订单详细页面.
+    将Order对象作为参数，并返回admin_Order_detail URL的HTML链接.
+    默认情况下，Django转义HTML输出.必须使用mark_safe功能以避免自动逃逸.
+    :param obj:
+    :return:
+    """
+    url = reverse('orders:admin_order_detail', args=[obj.id])
+    return mark_safe(f'<a href="{url}">View</a>')
+
+@admin.register(Order)
+class OrderAdmin(admin.ModelAdmin):
+    list_display = ['id', 'first_name', 'last_name', 'email', 'address', 'postal_code',
+                    'city', 'paid', 'created', 'updated',
+                    order_detail]
+```
+template创建, `chapter08/myshop/orders/templates/admin/orders/order/detail.html`. 网页验证:
+```text
+http://localhost:8000/admin/orders/order/
+```
+
