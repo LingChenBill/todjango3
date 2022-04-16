@@ -143,4 +143,23 @@ urlpatterns = [
 # 交易urls.
 path('payment', include('payment.urls', namespace='payment')),
 ```
+创建templates:
+```text
+chapter08/myshop/payment/templates/payment/canceled.html
+chapter08/myshop/payment/templates/payment/done.html
+chapter08/myshop/payment/templates/payment/process.html
+```
+验证, 在商品页面,调整商品价格:
+```text
+celery -A myshop worker -l info
 
+python manage.py runserver
+
+http://localhost:8000/admin/shop/product/
+
+交易test号:
+https://developer.paypal.com/braintree/docs/reference/general/testing/#test-value-4111111111111111
+
+https://sandbox.braintreegateway.com/merchants/j47ygk4dfffnfnmz/transactions/advanced_search
+```
+在订单生成后, 可以在orders_order表中, 可以看到沙箱中生成的交易id.

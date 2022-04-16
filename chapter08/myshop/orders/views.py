@@ -35,7 +35,7 @@ def order_create(request):
             order_created.delay(order.id)
 
             # 将订单id存入session.
-            request.session['order_id'] = order_id
+            request.session['order_id'] = order.id
             # 重定向到payment.
             return redirect(reverse('payment:process'))
 
