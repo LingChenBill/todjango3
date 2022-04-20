@@ -72,11 +72,23 @@ def order_detail(obj):
     return mark_safe(f'<a href="{url}">View</a>')
 
 
+def order_pdf(obj):
+    """
+    pdf导出.
+    :param obj:
+    :return:
+    """
+    url = reverse('orders:admin_order_pdf', args=[obj.id])
+    return mark_safe(f'<a href="{url}">PDF</a>')
+order_pdf.short_description = 'Invoice'
+
+
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     list_display = ['id', 'first_name', 'last_name', 'email', 'address', 'postal_code',
                     'city', 'paid', 'created', 'updated',
-                    order_detail]
+                    order_detail,
+                    order_pdf]
 
     list_filter = ['paid', 'created', 'updated']
 
@@ -85,4 +97,7 @@ class OrderAdmin(admin.ModelAdmin):
 
     # 将export_to_csv管理操作添加到OrderAdmin类.
     actions = [export_to_csv]
+
+
+
 

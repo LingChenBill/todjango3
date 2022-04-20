@@ -163,7 +163,6 @@ https://developer.paypal.com/braintree/docs/reference/general/testing/#test-valu
 https://sandbox.braintreegateway.com/merchants/j47ygk4dfffnfnmz/transactions/advanced_search
 ```
 在订单生成后, 可以在orders_order表中, 可以看到沙箱中生成的交易id.
-
 ####2.导出csv.
 在admin的order列表中加入一个导出csv的功能. `chapter08/myshop/orders/admin.py`:
 ```python
@@ -280,4 +279,205 @@ template创建, `chapter08/myshop/orders/templates/admin/orders/order/detail.htm
 ```text
 http://localhost:8000/admin/orders/order/
 ```
+####4.安装pdf导出依赖
+```bash
+pip install WeasyPrint
+```
+创建pdf的templates, `chapter08/myshop/orders/templates/orders/order/pdf.html`:
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>My shop</title>
+</head>
+<body>
+  <h1>My shop</h1>
+  <p>
+    Invoice no. {{ order.id }}<br />
+    <span class="secondary">
+      {{ order.created|date:'Y/m/d' }}
+    </span>
+  </p>
+
+  <h3>Bil to</h3>
+  <p>
+    {{ order.first_name }} {{ order.last_name }}<br />
+    {{ order.email }}<br />
+    {{ order.address }}<br />
+    {{ order.postal_code }}, {{ order.city }}
+  </p>
+
+  <h3>Items brought</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Product</th>
+        <th>Price</th>
+        <th>Quantity</th>
+        <th>Cost</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in order.items.all %}
+        <tr class="row{% cycle '1' '2' %}">
+          <td>{{ item.product.name }}</td>
+          <td class="num">{{ item.price }}</td>
+          <td class="num">{{ item.quantity }}</td>
+          <td class="num">{{ item.get_cost }}</td>
+        </tr>
+      {% endfor %}
+      <tr class="total">
+        <td colspan="3">Total</td>
+        <td class="num">{{ order.get_total_cost }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <span class="{% if order.paid %}paid{% else %}pending{% endif %}">
+    {% if order.paid %}Paid{% else %}Pending payment{% endif %}
+  </span>
+</body>
+</html>
+```
+编写view, `chapter08/myshop/orders/views.py`:
+```python
+import weasyprint
+
+from django.conf import settings
+from django.http import HttpResponse
+from django.template.loader import render_to_string
+
+
+@staff_member_required
+def admin_order_pdf(request, order_id):
+    """
+    打印PDF.
+    :param request:
+    :param order_id:
+    :return:
+    """
+    # 获取具有给定ID的Order对象，然后使用Django提供的render_to_string()函数来呈现orders/Order/pdf.html.
+    # 呈现的HTML保存在HTML变量中.
+    order = get_object_or_404(Order, id=order_id)
+    html = render_to_string('orders/order/pdf.html',
+                            {'order': order})
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'filename=order_{ order.id}.pdf'
+
+    # 使用WeasyPrint从呈现的HTML代码生成PDF文件，并将该文件写入HttpResponse对象.
+    # 使用静态file css/pdf.css将css样式添加到生成的PDF文件中.
+    # 然后，使用STATIC_ROOT设置从本地路径加载它. 最后，返回生成的response.
+    weasyprint.HTML(string=html).write_pdf(response,
+                                           stylesheets=[weasyprint.CSS(
+                                               settings.STATIC_ROOT + 'css/pdf.css')])
+    return response
+```
+创建pdf的css, `chapter08/myshop/shop/static/css/pdf.css`:
+```css
+body {
+    font-family:Helvetica, sans-serif;
+    color:#222;
+    line-height:1.5;
+}
+
+table {
+    width:100%;
+    border-spacing:0;
+    border-collapse: collapse;
+    margin:20px 0;
+}
+
+table th, table td {
+    text-align:left;
+    font-size:14px;
+    padding:10px;
+    margin:0;
+}
+
+tbody tr:nth-child(odd) {
+    background:#efefef;
+}
+
+thead th, tbody tr.total {
+    background:#5993bb;
+    color:#fff;
+    font-weight:bold;
+}
+
+h1 {
+    margin:0;
+}
+
+
+.secondary {
+    color:#bbb;
+    margin-bottom:20px;
+}
+
+.num {
+    text-align:right;
+}
+
+.paid, .pending {
+    color:#1bae37;
+    border:4px solid #1bae37;
+    text-transform:uppercase;
+    font-weight:bold;
+    font-size:22px;
+    padding:4px 12px 0px;
+    float:right;
+    transform: rotate(-15deg);
+    margin-right:40px;
+}
+
+.pending {
+    color:#a82d2d;
+    border:4px solid #a82d2d;
+}
+```
+配置`settings.py`:
+```python
+# PDF conf.
+STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
+```
+生成PDF的相关static的相关文件:
+```bash
+python manage.py collectstatic
+```
+配置url, `chapter08/myshop/orders/urls.py`:
+```python
+# pdf导出.
+path('admin/order/<int:order_id>/pdf/', views.admin_order_pdf, name='admin_order_pdf'),
+```
+将pdf加入管理页面中, `chapter08/myshop/orders/admin.py`:
+```python
+def order_pdf(obj):
+    """
+    pdf导出.
+    :param obj:
+    :return:
+    """
+    url = reverse('orders:admin_order_pdf', args=[obj.id])
+    return mark_safe(f'<a href="{url}">PDF</a>')
+order_pdf.short_description = 'Invoice'
+
+@admin.register(Order)
+class OrderAdmin(admin.ModelAdmin):
+    list_display = ['id', 'first_name', 'last_name', 'email', 'address', 'postal_code',
+                    'city', 'paid', 'created', 'updated',
+                    order_detail,
+                    order_pdf]
+```
+在页面验证:
+```bash
+python manage.py runserver
+```
+html:
+```text
+http://127.0.0.1:8000/admin/orders/order/
+```
+
+
 

@@ -1,6 +1,10 @@
+import weasyprint
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.contrib.admin.views.decorators import staff_member_required
+from django.conf import settings
+from django.http import HttpResponse
+from django.template.loader import render_to_string
 from .models import OrderItem, Order
 from .forms import OrderCreateForm
 from cart.cart import Cart
@@ -66,3 +70,29 @@ def admin_order_detail(request, order_id):
     return render(request,
                   'admin/orders/order/detail.html',
                   {'order': order})
+
+
+@staff_member_required
+def admin_order_pdf(request, order_id):
+    """
+    打印PDF.
+    :param request:
+    :param order_id:
+    :return:
+    """
+    # 获取具有给定ID的Order对象，然后使用Django提供的render_to_string()函数来呈现orders/Order/pdf.html.
+    # 呈现的HTML保存在HTML变量中.
+    order = get_object_or_404(Order, id=order_id)
+    html = render_to_string('orders/order/pdf.html',
+                            {'order': order})
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'filename=order_{ order.id}.pdf'
+
+    # 使用WeasyPrint从呈现的HTML代码生成PDF文件，并将该文件写入HttpResponse对象.
+    # 使用静态file css/pdf.css将css样式添加到生成的PDF文件中.
+    # 然后，使用STATIC_ROOT设置从本地路径加载它. 最后，返回生成的response.
+    weasyprint.HTML(string=html).write_pdf(response,
+                                           stylesheets=[weasyprint.CSS(
+                                               settings.STATIC_ROOT + 'css/pdf.css')])
+    return response
