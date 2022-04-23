@@ -481,3 +481,67 @@ http://127.0.0.1:8000/admin/orders/order/
 
 
 
+
+####发送pdf到邮件
+创建异步任务, `chapter08/myshop/payment/tasks.py`:
+```python
+from io import BytesIO
+from myshop.celery import app
+from django.template.loader import render_to_string
+from django.core.mail import EmailMessage
+from django.conf import settings
+from orders.models import Order
+import weasyprint
+
+
+@app.task
+def payment_completed(order_id):
+    """
+    成功创建订单时发送电子邮件通知的任务.
+    :param order_id:
+    :return:
+    """
+    order = Order.objects.get(id=order_id)
+
+    subject = f'My Shop - EE Invoice no.{order.id}'
+    message = 'Please, find attached the invoice for your recent purchase.'
+    email = EmailMessage(subject,
+                         message,
+                         'lingchen1316@163.com',
+                         [order.email])
+
+    # 生成PDF到BytesIO中.
+    html = render_to_string('orders/order/pdf.html', {'order': order})
+    out = BytesIO()
+    # 加载css.
+    stylesheets = [weasyprint.CSS(settings.STATIC_ROOT + 'css/pdf.css')]
+    weasyprint.HTML(string=html).write_pdf(out, stylesheets=stylesheets)
+
+    # 添加附件.
+    email.attach(f'order_{order.id}.pdf',
+                 out.getvalue(),
+                 'application/pdf')
+    # 发送邮件.
+    email.send()
+```
+修改view,在订单支付后, 添加异步任务.`chapter08/myshop/payment/views.py`:
+```python
+from .tasks import payment_completed
+
+# 发送异步任务.
+payment_completed.delay(order.id)
+```
+修改配置文件, 加邮件设置加入, `chapter08/myshop/myshop/settings.py`:
+```python
+EMAIL_HOST = 'smtp.163.com'
+EMAIL_HOST_USER = 'username@163.com'
+EMAIL_HOST_PASSWORD = 'password'
+EMAIL_PORT = 25
+EMAIL_USE_TLS = True
+```
+启动验证, 启动rabbitMQ服务:
+```bash
+python manage.py runserver
+
+celery -A myshop worker -l info
+```

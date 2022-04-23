@@ -144,7 +144,12 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
 CART_SESSION_ID = 'cart'
 
 # email console配置.
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_HOST = 'smtp.163.com'
+EMAIL_HOST_USER = 'username@163.com'
+EMAIL_HOST_PASSWORD = 'password'
+EMAIL_PORT = 25
+EMAIL_USE_TLS = True
 
 # braintree config.
 BRAINTREE_MERCHANT_ID = 'xxxx'
