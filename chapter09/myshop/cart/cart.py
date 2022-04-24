@@ -6,6 +6,7 @@
 from decimal import Decimal
 from django.conf import settings
 from shop.models import Product
+from coupons.models import Coupon
 
 
 class Cart(object):
@@ -20,6 +21,9 @@ class Cart(object):
             # 赋于一个空的cart到session中.
             cart = self.session[settings.CART_SESSION_ID] = {}
         self.cart = cart
+
+        # 将折扣ID存入session.
+        self.coupon_id = self.session.get('coupon_id')
 
     def add(self, product, quantity=1, override_quantity=False):
         """
@@ -99,3 +103,36 @@ class Cart(object):
         """
         del self.session[settings.CART_SESSION_ID]
         self.save()
+
+    @property
+    def coupon(self):
+        """
+        折扣处理.
+        将此方法定义为属性. 如果购物车包含优惠券id属性，返回具有给定id的优惠券对象.
+        :return:
+        """
+        if self.coupon_id:
+            try:
+                return Coupon.objects.get(id=self.coupon_id)
+            except Coupon.DoesNotExist:
+                pass
+        return None
+
+    def get_discount(self):
+        """
+        获取折扣.
+        如果购物车包含优惠券，则可以检索其折扣对要从购物车总金额中扣除的金额进行评级并返还.
+        :return:
+        """
+        if self.coupon:
+            return (self.coupon.discount / Decimal(100)) * self.get_total_price()
+
+        return Decimal(0)
+
+    def get_total_price_after_discount(self):
+        """
+        返回所需的总金额扣除get_discount()方法返回的金额后的购物车.
+        :return:
+        """
+        return self.get_total_price() - self.get_discount()
+

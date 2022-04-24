@@ -1,13 +1,3 @@
-####1.创建折扣app.
-```bash
-python manage.py startapp coupons
-```
-将app添加到主工程中, `chapter09/myshop/myshop/settings.py`
-```python
-'coupons.apps.CouponsConfig',
-```
-创建折扣model, `chapter09/myshop/coupons/models.py`:
-```python
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 
@@ -32,23 +22,3 @@ class Coupon(models.Model):
 
     def __str__(self):
         return self.code
-```
-数据迁移入DB:
-```bash
-python manage.py makemigrations
-
-python manage.py migrate
-```
-修改文件:
-```text
-chapter09/myshop/myshop/urls.py
-chapter09/myshop/cart/views.py
-chapter09/myshop/cart/cart.py
-chapter09/myshop/coupons/admin.py
-chapter09/myshop/coupons/apps.py
-chapter09/myshop/coupons/forms.py
-chapter09/myshop/coupons/models.py
-chapter09/myshop/coupons/tests.py
-chapter09/myshop/coupons/urls.py
-chapter09/myshop/coupons/views.py
-```
