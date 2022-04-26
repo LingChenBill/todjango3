@@ -1,5 +1,8 @@
 from django.db import models
 from shop.models import Product
+from decimal import Decimal
+from django.core.validators import MinValueValidator, MaxValueValidator
+from coupons.models import Coupon
 
 # Create your models here.
 
@@ -23,6 +26,18 @@ class Order(models.Model):
     # braintree的沙箱交易id.
     braintree_id = models.CharField(max_length=150, blank=True)
 
+    # 存储订单的可选优惠券以及优惠券应用的折扣百分比.
+    # 折扣存储在相关优惠券对象中，但如果优惠券被修改或删除，可以将其包括在订单模型中以保留折扣.
+    # 设置了on_delete = SET_NULL, 这样如果优惠券被删除，优惠券字段将设置为NULL，但折扣将保留.
+    coupon = models.ForeignKey(Coupon,
+                               related_name='orders',
+                               null=True,
+                               blank=True,
+                               on_delete=models.SET_NULL)
+    # order中保留折扣.
+    discount = models.IntegerField(default=0,
+                                   validators=[MinValueValidator(0), MaxValueValidator(100)])
+
     class Meta:
         ordering = ('-created',)
 
@@ -34,7 +49,10 @@ class Order(models.Model):
         获取此订单中购买的物品的总成本.
         :return:
         """
-        return sum(item.get_cost() for item in self.items.all())
+        # return sum(item.get_cost() for item in self.items.all())
+        # 总价 - 折扣价.
+        total_cost = sum(item.get_cost() for item in self.items.all())
+        return total_cost - total_cost * (self.discount / Decimal(100))
 
 
 class OrderItem(models.Model):
