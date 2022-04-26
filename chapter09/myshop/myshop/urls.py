@@ -25,11 +25,11 @@ urlpatterns = [
     # 订单urls.
     path('orders/', include('orders.urls', namespace='orders')),
     # 交易urls.
-    path('payment', include('payment.urls', namespace='payment')),
+    path('payment/', include('payment.urls', namespace='payment')),
     # 商品urls.
     path('', include('shop.urls', namespace='shop')),
     # 折扣urls.
-    path('coupons', include('coupons.urls', namespace='coupons')),
+    path('coupons/', include('coupons.urls', namespace='coupons')),
 ]
 
 if settings.DEBUG:

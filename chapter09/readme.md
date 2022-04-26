@@ -52,3 +52,8 @@ chapter09/myshop/coupons/tests.py
 chapter09/myshop/coupons/urls.py
 chapter09/myshop/coupons/views.py
 ```
+修改templates:
+```text
+chapter09/myshop/orders/templates/orders/order/create.html
+chapter09/myshop/cart/templates/cart/detail.html
+```
