@@ -1,28 +1,37 @@
+{% load i18n %}
 {% load static %}
 
 <!DOCTYPE html>
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>{% block title %}My shop{% endblock %}</title>
+    <title>{% block title %}{% trans 'My shop' %}{% endblock %}</title>
     <link href="{% static 'css/base.css' %}" rel="stylesheet">
   </head>
 
   <body>
     <div id="header">
-      <a href="/" class="logo">My shop</a>
+      <a href="/" class="logo">{% trans 'My shop' %}</a>
     </div>
 
     <div id="subheader">
       <div class="cart">
         {% with total_items=cart|length %}
           {% if total_items > 0 %}
-            Your cart:
+            {% trans 'Your cart'%}:
             <a href="{% url 'cart:cart_detail' %}">
-              {{ total_items }} item{{ total_items | pluralize }}, ¥{{ cart.get_total_price }}
+              {#用cart.get_total_price设置占位符合计. get_total_price（此处称为object方法）.#}
+              {#还可以使用count，它允许您为Django设置一个计数对象的变量，以选择正确的复数形式.#}
+              {#将items变量设置为使用total_items的值对对象进行计数.#}
+              {#这允许您设置单数形式和复数形式的转换，您可以在{%blocktrans%}块中用{%plural%}标记分隔单数形式和复数形式.#}
+              {% blocktrans with total=cart.get_total_price count items=total_items %}
+                {{ items }} item, ¥{{ total }}
+              {% plural %}
+                {{ items }} item, ¥{{ total }}
+              {% endblocktrans %}
             </a>
           {% else %}
-            Your cart is empty.
+            {% trans 'Your cart is empty.' %}
           {% endif %}
         {% endwith %}
       </div>

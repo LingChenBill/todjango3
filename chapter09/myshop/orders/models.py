@@ -3,6 +3,7 @@ from shop.models import Product
 from decimal import Decimal
 from django.core.validators import MinValueValidator, MaxValueValidator
 from coupons.models import Coupon
+from django.utils.translation import gettext_lazy as _
 
 # Create your models here.
 
@@ -12,12 +13,12 @@ class Order(models.Model):
     订单模型包含几个用于存储客户信息的field和一个默认为False的付费布尔field.
     稍后，您将使用此字段来区分已付款订单和未付款订单.
     """
-    first_name = models.CharField(max_length=50)
-    last_name = models.CharField(max_length=50)
-    email = models.EmailField()
-    address = models.CharField(max_length=250)
-    postal_code = models.CharField(max_length=20)
-    city = models.CharField(max_length=100)
+    first_name = models.CharField(_('first_name'), max_length=50)
+    last_name = models.CharField(_('last_name'), max_length=50)
+    email = models.EmailField(_('e-mail'))
+    address = models.CharField(_('address'), max_length=250)
+    postal_code = models.CharField(_('postal_code'), max_length=20)
+    city = models.CharField(_('city'), max_length=100)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 

@@ -57,3 +57,101 @@ chapter09/myshop/coupons/views.py
 chapter09/myshop/orders/templates/orders/order/create.html
 chapter09/myshop/cart/templates/cart/detail.html
 ```
+####2.app国际化.
+settings.py配置, `chapter09/myshop/myshop/settings.py`:
+```python
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+
+# languages.
+# "语言"设置包含两个元组，由语言代码和名称组成.
+LANGUAGES = (
+    ('en', 'English'),
+    ('es', 'Spanish'),
+)
+
+# 语言包路径.
+# 最先出现的区域设置路径具有最高优先级.
+LOCALE_PATHS = (
+    os.path.join(BASE_DIR, 'locale/'),
+)
+
+# LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'en'
+```
+标准翻译:
+```python
+from django.utils.translation import gettext as _
+output = _('Text to translated.')
+output
+Out[4]: 'Text to translated.'
+output_1 = _('欢迎来到这里.') 
+output_1
+Out[6]: '欢迎来到这里.'
+month = _('April')
+day = '14'
+output = _('Today is %(month)s %(day)s') % {'month': month, 'day': day}
+output
+Out[10]: 'Today is April 14'
+```
+设置翻译, `chapter09/myshop/myshop/settings.py`:
+```python
+from django.utils.translation import gettext_lazy as _
+
+# "语言"设置包含两个元组，由语言代码和名称组成.
+LANGUAGES = (
+    ('en', _('English')),
+    ('es', _('Spanish')),
+)
+```
+生成翻译文件:
+```bash
+% django-admin makemessages --all
+processing locale es
+processing locale en
+```
+修改文件,`chapter09/myshop/locale/es/LC_MESSAGES/django.po`:
+```text
+#: myshop/settings.py:132
+msgid "English"
+msgstr "Inglés"
+
+#: myshop/settings.py:133
+msgid "Spanish"
+msgstr "Español"
+```
+编译:
+```bash
+django-admin compilemessages
+```
+修改model, `chapter09/myshop/orders/models.py`:
+```python
+from django.utils.translation import gettext_lazy as _
+
+first_name = models.CharField(_('first_name'), max_length=50)
+last_name = models.CharField(_('last_name'), max_length=50)
+email = models.EmailField(_('e-mail'))
+address = models.CharField(_('address'), max_length=250)
+postal_code = models.CharField(_('postal_code'), max_length=20)
+city = models.CharField(_('city'), max_length=100)
+```
+修改templates, `chapter09/myshop/shop/templates/shop/base.html`:
+```html
+{% load i18n %}
+
+{% block title %}{% trans 'My shop' %}{% endblock %}</title>
+
+{% blocktrans with total=cart.get_total_price count items=total_items %}
+  {{ items }} item, ¥{{ total }}
+{% plural %}
+  {{ items }} item, ¥{{ total }}
+{% endblocktrans %}
+```
