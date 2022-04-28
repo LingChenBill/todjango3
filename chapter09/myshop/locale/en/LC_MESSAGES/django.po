@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-04-27 22:32+0800\n"
+"POT-Creation-Date: 2022-04-28 22:04+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,10 +18,146 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: myshop/settings.py:132
-msgid "English"
+#: cart/forms.py:19 cart/templates/cart/detail.html:17
+msgid "Quantity"
+msgstr ""
+
+#: cart/templates/cart/detail.html:6 cart/templates/cart/detail.html:10
+msgid "Your shopping cart"
+msgstr ""
+
+#: cart/templates/cart/detail.html:15
+msgid "Image"
+msgstr ""
+
+#: cart/templates/cart/detail.html:16
+msgid "Product"
+msgstr ""
+
+#: cart/templates/cart/detail.html:18
+msgid "Remove"
+msgstr ""
+
+#: cart/templates/cart/detail.html:19
+msgid "Unit price"
+msgstr ""
+
+#: cart/templates/cart/detail.html:20
+msgid "Price"
+msgstr ""
+
+#: cart/templates/cart/detail.html:41
+msgid "Update"
+msgstr ""
+
+#: cart/templates/cart/detail.html:46
+msgid "remove"
+msgstr ""
+
+#: cart/templates/cart/detail.html:61
+msgid "Subtotal"
+msgstr ""
+
+#: cart/templates/cart/detail.html:66
+#, python-format
+msgid ""
+"\n"
+"            <td>\n"
+"              \"%(code)s\" coupon (%(discount)s%% off)\n"
+"            </td>\n"
+"          "
+msgstr ""
+
+#: cart/templates/cart/detail.html:94
+msgid "Continue shopping"
+msgstr ""
+
+#: cart/templates/cart/detail.html:95
+msgid "Checkout"
+msgstr ""
+
+#: coupons/forms.py:14
+msgid "Coupon"
 msgstr ""
 
 #: myshop/settings.py:133
+msgid "English"
+msgstr ""
+
+#: myshop/settings.py:134
 msgid "Spanish"
+msgstr ""
+
+#: myshop/urls.py:24
+msgid "admin/"
+msgstr ""
+
+#: myshop/urls.py:26
+msgid "cart/"
+msgstr ""
+
+#: myshop/urls.py:28
+msgid "orders/"
+msgstr ""
+
+#: myshop/urls.py:30
+msgid "payment/"
+msgstr ""
+
+#: myshop/urls.py:32
+msgid "coupons/"
+msgstr ""
+
+#: payment/urls.py:14
+msgid "process/"
+msgstr ""
+
+#: payment/urls.py:16
+msgid "done/"
+msgstr ""
+
+#: payment/urls.py:18
+msgid "canceled/"
+msgstr ""
+
+#: shop/templates/shop/base.html:8 shop/templates/shop/base.html:14
+msgid "My shop"
+msgstr ""
+
+#: shop/templates/shop/base.html:21
+msgid "Your cart"
+msgstr ""
+
+#: shop/templates/shop/base.html:27
+#, python-format
+msgid ""
+"\n"
+"                %(items)s item, ¥%(total)s\n"
+"              "
+msgid_plural ""
+"\n"
+"                %(items)s item, ¥%(total)s\n"
+"              "
+msgstr[0] ""
+msgstr[1] ""
+
+#: shop/templates/shop/base.html:34
+msgid "Your cart is empty."
+msgstr ""
+
+#: shop/templates/shop/product/detail.html:28
+msgid "Add to cart"
+msgstr ""
+
+#: shop/templates/shop/product/list.html:9
+#: shop/templates/shop/product/list.html:33
+msgid "Products"
+msgstr ""
+
+#: shop/templates/shop/product/list.html:15
+msgid "Categories"
+msgstr ""
+
+#: shop/templates/shop/product/list.html:18
+msgid "All"
 msgstr ""

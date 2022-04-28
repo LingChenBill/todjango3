@@ -155,3 +155,91 @@ city = models.CharField(_('city'), max_length=100)
   {{ items }} item, ¥{{ total }}
 {% endblocktrans %}
 ```
+####2.安装翻译依赖.rosetta:
+```bash
+pip install django-rosetta
+```
+配置settings.py, `chapter09/myshop/myshop/settings.py`:
+```python
+'rosetta',
+```
+配置rosetta的访问url, `chapter09/myshop/myshop/urls.py`:
+```python
+# 翻译rosetta, urls.
+path('rosetta/', include('rosetta.urls')),
+```
+启动站点, 在管理页面, 网页端配置i18n的翻译功能:
+```bash
+% python manage.py runserver
+
+http://127.0.0.1:8000/rosetta/files/third-party/es/0/?msg_filter=all&ref_lang=msgid&page=1
+```
+####3.url的i18n配置.
+`chapter09/myshop/myshop/urls.py`:
+```python
+from django.conf.urls.i18n import i18n_patterns
+
+urlpatterns = i18n_patterns(
+    path('admin/', admin.site.urls),
+    # 购物车操作urls.
+    path('cart/', include('cart.urls', namespace='cart')),
+    # 订单urls.
+    path('orders/', include('orders.urls', namespace='orders')),
+    # 交易urls.
+    path('payment/', include('payment.urls', namespace='payment')),
+    # 折扣urls.
+    path('coupons/', include('coupons.urls', namespace='coupons')),
+    # 翻译rosetta, urls.
+    path('rosetta/', include('rosetta.urls')),
+    # 商品urls.
+    path('', include('shop.urls', namespace='shop')),
+)
+
+from django.utils.translation import gettext_lazy as _
+
+urlpatterns = i18n_patterns(
+    path(_('admin/'), admin.site.urls),
+    # 购物车操作urls.
+    path(_('cart/'), include('cart.urls', namespace='cart')),
+    # 订单urls.
+    path(_('orders/'), include('orders.urls', namespace='orders')),
+    # 交易urls.
+    path(_('payment/'), include('payment.urls', namespace='payment')),
+    # 折扣urls.
+    path(_('coupons/'), include('coupons.urls', namespace='coupons')),
+    # 翻译rosetta, urls.
+    path('rosetta/', include('rosetta.urls')),
+    # 商品urls.
+    path('', include('shop.urls', namespace='shop')),
+)
+```
+生成翻译文件:
+```bash
+django-admin makemessages --all
+```
+####3在首页中, 设置language的切换表示. `chapter09/myshop/shop/templates/shop/base.html`:
+```html
+<div id="header">
+  <a href="/" class="logo">{% trans 'My shop' %}</a>
+  {% get_current_language as LANGUAGE_CODE %}
+  {% get_available_languages as LANGUAGES %}
+  {% get_language_info_list for LANGUAGES as languages %}
+  <div class="languages">
+    <p>{% trans 'Languages' %}:</p>
+    <ul class="languages">
+      {% for language in languages %}
+        <li>
+          <a href="/{{ language.code }}/" {% if language.code == LANGUAGE_CODE %} class="selected"{% endif %}>
+             {{ language.name_local }}
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+```
+在网页中, 验证切换语言:
+```bash
+python manage.py runserver
+```
+
