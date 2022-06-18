@@ -242,4 +242,100 @@ django-admin makemessages --all
 ```bash
 python manage.py runserver
 ```
+安装model语言翻译的依赖包:
+```bash
+pip install django-parler
+```
+修改model, `chapter09/myshop/shop/models.py`
+```python
+from parler.models import TranslatableModel, TranslatedFields
 
+class Category(TranslatableModel):
+    """
+    商品类别model.
+    类别模型由名称字段和唯一slug字段组成（唯一表示创建索引）.
+    django parler通过为每个可翻译模型生成另一个模型来管理翻译.
+    """
+    translations = TranslatedFields(
+        name=models.CharField(max_length=200, db_index=True),
+        slug=models.SlugField(max_length=200, db_index=True, unique=True)
+    )
+
+    class Meta:
+        # ordering = ('name',)
+        verbose_name = 'category'
+        verbose_name_plural = 'categories'
+```
+修改`chapter09/myshop/shop/admin.py`:
+```python
+from parler.admin import TranslatableAdmin
+
+# Register your models here.
+
+
+@admin.register(Category)
+class CategoryAdmin(TranslatableAdmin):
+    """
+    类别管理.
+    django parler不支持prepopulated fields属性，但它支持提供相同功能的get prepopulated fields()方法.
+    """
+    list_display = ['name', 'slug']
+    # prepopulated_fields属性指定使用其他FIELD的值自动设置值的FIELD.
+    # prepopulated_fields = {'slug': ('name',)}
+
+    def get_prepopulated_fields(self, request, obj=None):
+        return {'slug': ('name',)}
+```
+生成依赖:
+```bash
+python manage.py makemigrations shop --name "translations"
+```
+修改数据迁移文件, `chapter09/myshop/shop/migrations/0002_translations.py`:
+```python
+# bases=(parler.models.TranslatedFieldsModelMixin, models.Model),
+bases = (parler.models.TranslatableModel, models.Model),
+```
+同步数据:
+```bash
+python manage.py migrate shop
+```
+在管理页面中, 修改model的语言.`http://127.0.0.1:8000/en/admin/shop/category/`
+在产品页面也修改产品的语言.`http://127.0.0.1:8000/en/admin/shop/product/`
+在命令行界面, 查看产品信息:
+```bash
+python manage.py shell
+
+from shop.models import Product
+from django.utils.translation import activate
+activate('es')
+
+product=Product.objects.first()
+product.name
+
+product=Product.objects.language('en').first()
+product.name
+
+product.set_current_language('es')
+product.name
+
+Product.objects.filter(translations__name='Green tea')
+
+```
+####安装用于特定国家和文化的实用程序集合依赖包:
+```text
+django localflavor是一个第三方模块，它包含一个UTIL集合，
+例如表单FIELD或模型FIELD，这些集合针对每个国家都是特定的。
+它对于验证本地区域、本地电话号码、身份证号码、社会安全号码等非常有用。
+该软件包被组织成一系列以ISO 3166国家代码命名的模块.
+```
+```bash
+pip install django-localflavor
+```
+修改settings.py:
+```python
+'localflavor',
+```
+官网地址:
+```text
+https://django-localflavor.readthedocs.io/ en/latest/.
+```

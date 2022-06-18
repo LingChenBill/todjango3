@@ -46,6 +46,8 @@ INSTALLED_APPS = [
     'payment.apps.PaymentConfig',
     'coupons.apps.CouponsConfig',
     'rosetta',
+    'parler',
+    'localflavor',
 ]
 
 MIDDLEWARE = [
@@ -182,3 +184,15 @@ BRAINTREE_CONF = braintree.Configuration(
 
 # PDF conf.
 STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
+
+# parler config.
+PARLER_LANGUAGES = {
+    None: (
+        {'code': 'en'},
+        {'code': 'es'},
+    ),
+    'default': {
+        'fallback': 'en',
+        'hide_untranslated': False,
+    }
+}
